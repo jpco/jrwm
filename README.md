@@ -5,36 +5,44 @@ _(Alternatively, jpco's river window manager)_
 jrwm is a tiling window manager written against [the river Wayland
 compositor](https://isaacfreund.com/software/river/).
 
-It is a tiling WM, with a layout inspired by that of dwm.  The implementation is
-based on that of tinyrwm, although jrwm seems to be, surprisingly, slightly more
-fastidiously protocol-rule-following than tinyrwm itself.
+jrwm is a dynamic tiling WM with a layout inspired by that of dwm.  The
+implementation is based on that of tinyrwm, although jrwm seems to be,
+surprisingly, more fastidiously protocol-rule-following than tinyrwm itself.
+
+jrwm is intended to be low-dependency, both to build and to run.
 
 
 ## Configuration
 
-jrwm comprises a single file, `jrwm.c`, which can be edited.  A real method for
-configuration, likely via an IPC mechanism, is a TODO.
+jrwm comprises a single file, `jrwm.c`, which can be edited.
 
 
 ## Building and installation
 
-jrwm only requires a C99-capable compiler, GNU `make`, and wayland-scanner to
-build.  (And GNU `make` can be replaced with an alternative with some very
-simple changes to the makefile.  `make install` will (by default) install jrwm
-to `/usr/local/bin`.
+To build, jrwm requires:
+ - a C99-capable compiler
+ - GNU make (easy to make portable with small changes to the makefile)
+ - the wayland-scanner utility (probably from your distribution's `wayland`
+   package)
+ - libxkbcommon, or your distribution's version
 
-Of course, to run, jrwm requires river to be running.
+Building is as simple as `make`.  Installation is then `make install` as root.
+jrwm will be installed by default into the /usr/local/bin directory.
+
+To run, jrwm requires river, of course.
 
 
 ## TODO
 
-jrwm is still in active development.  Desired additions include:
+jrwm is still in active development.  Desired improvements and additions
+include:
 
 -   Better multi-Space support: more Spaces, better Space/Output assignment,
     dynamic/configurable Spaces
--   Dialog-style windows
+-   Behavioral tweaks to more closely match other WMs and expectations around
+    window movement, focus, output management, etc.
 -   Optional focus-follows-pointer and pointer-follows-focus behavior
--   Actual configuration, probably via IPC
+-   Actual configuration, probably via IPC or API
 -   Additional minor, nice behaviors: output scaling, libinput config,
     background color
 

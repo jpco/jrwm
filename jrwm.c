@@ -49,7 +49,7 @@ struct Output {
 	struct river_output_v1 *obj;
 	struct river_layer_shell_output_v1 *ls;
 
-	struct Rect real, windowed;
+	struct Rect windowed;
 
 	struct Space *active;
 };
@@ -71,6 +71,7 @@ struct Window {
 	// information for render sequence
 	struct Rect layout;
 
+	struct Window *parent; // usually null
 	struct Space *space;
 };
 
@@ -132,20 +133,8 @@ static void output_handle_removed(void *data, struct river_output_v1 *obj) {
 	free(output);
 }
 
-static void output_handle_dimensions(void *data, struct river_output_v1 *obj, int32_t width, int32_t height) {
-	if (debug) fprintf(stderr, "Handling output dimensions\n");
-	struct Output *output = data;
-	output->real.width = width;
-	output->real.height = height;
-}
-
-static void output_handle_position(void *data, struct river_output_v1 *obj, int32_t x, int32_t y) {
-	if (debug) fprintf(stderr, "Handling output position\n");
-	struct Output *output = data;
-	output->real.x = x;
-	output->real.y = y;
-}
-
+static void output_handle_dimensions(void *data, struct river_output_v1 *obj, int32_t width, int32_t height) {}
+static void output_handle_position(void *data, struct river_output_v1 *obj, int32_t x, int32_t y) {}
 static void output_handle_wl_output(void *data, struct river_output_v1 *obj, uint32_t name) {}
 
 const struct river_output_v1_listener river_output_listener = {
@@ -156,6 +145,7 @@ const struct river_output_v1_listener river_output_listener = {
 };
 
 static void ls_output_handle_non_exclusive_area(void *data, struct river_layer_shell_output_v1 *river_ls_output_v1, int32_t x, int32_t y, int32_t width, int32_t height) {
+	if (debug) fprintf(stderr, "Handling non-exclusive area\n");
 	struct Output *output = data;
 	output->windowed.x = x;
 	output->windowed.y = y;
@@ -193,6 +183,7 @@ static void window_handle_closed(void *data, struct river_window_v1 *obj) {
 }
 
 static void window_handle_fullscreen_requested(void *data, struct river_window_v1 *obj, struct river_output_v1 *river_output) {
+	if (debug) fprintf(stderr, "Handling fullscreen request\n");
 	struct Window *window = data;
 	if (window->space->fullscreen == NULL) {
 		window->space->fullscreen = window;
@@ -201,6 +192,7 @@ static void window_handle_fullscreen_requested(void *data, struct river_window_v
 }
 
 static void window_handle_exit_fullscreen_requested(void *data, struct river_window_v1 *obj) {
+	if (debug) fprintf(stderr, "Handling exit-fullscreen request\n");
 	struct Window *window = data;
 	if (window->space->fullscreen == window) {
 		window->space->fullscreen = NULL;
@@ -209,6 +201,7 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 }
 
 static void window_handle_maximize_requested(void *data, struct river_window_v1 *obj) {
+	if (debug) fprintf(stderr, "Handling maximize request\n");
 	struct Window *window = data;
 	if (window->space->maximized == NULL) {
 		window->space->maximized = window;
@@ -217,6 +210,7 @@ static void window_handle_maximize_requested(void *data, struct river_window_v1 
 }
 
 static void window_handle_unmaximize_requested(void *data, struct river_window_v1 *obj) {
+	if (debug) fprintf(stderr, "Handling unmaximize request\n");
 	struct Window *window = data;
 	if (window->space->maximized == window) {
 		window->space->maximized = NULL;
@@ -224,14 +218,30 @@ static void window_handle_unmaximize_requested(void *data, struct river_window_v
 	}
 }
 
+static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {
+	struct Window *window = data;
+	if (parent != NULL) {
+		if (debug) fprintf(stderr, "Handling non-null parent window\n");
+		window->parent = river_window_v1_get_user_data(parent);
+	} else {
+		if (debug) fprintf(stderr, "Handling null parent window\n");
+		window->parent = NULL;
+	}
+}
+
+static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
+	if (debug) fprintf(stderr, "Handling window dimensions\n");
+	struct Window *window = data;
+	window->layout.width = width;
+	window->layout.height = height;
+}
+
 // Ignored events
 static void window_handle_app_id(void *data, struct river_window_v1 *obj, const char *app_id) {}
 static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
-static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {}
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {}
 static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
-static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {}
 static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
 static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {}
 static void window_handle_presentation_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
@@ -413,12 +423,12 @@ void binding_focus_prev(struct Seat *seat, char **argv) {
 
 void binding_move_next(struct Seat *seat, char **argv) {
 	struct Space *space = seat->focused;
-	if (space->focused == NULL)
+	if (space->focused == NULL || space->focused->parent != NULL)
 		return;
 	bool next = false;
 	struct Window *curr = space->focused, *target = NULL, *w = NULL;
 	wl_list_for_each(w, &wm.windows, link) {
-		if (w->space != space)
+		if (w->space != space || w->parent != NULL)
 			continue;
 		if (next) {
 			target = w;
@@ -437,12 +447,12 @@ void binding_move_next(struct Seat *seat, char **argv) {
 
 void binding_move_prev(struct Seat *seat, char **argv) {
 	struct Space *space = seat->focused;
-	if (space->focused == NULL)
+	if (space->focused == NULL || space->focused->parent != NULL)
 		return;
 	bool next = false;
 	struct Window *curr = space->focused, *target = NULL, *w = NULL;
 	wl_list_for_each_reverse(w, &wm.windows, link) {
-		if (w->space != space)
+		if (w->space != space || w->parent != NULL)
 			continue;
 		if (next) {
 			target = w;
@@ -582,11 +592,11 @@ static void layout_space(struct Space *space, struct Rect bounds) {
 	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space)
+		if (window->space == space && window->parent == NULL)
 			count++;
 	}
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space)
+		if (window->space != space || window->parent != NULL)
 			continue;
 		struct Rect wlay;
 		if (count == 1) {
@@ -620,13 +630,34 @@ static void layout_space(struct Space *space, struct Rect bounds) {
 	}
 }
 
+static void place_child_window(struct Window *window, struct Rect bounds) {
+	struct Window *parent = window;
+	while (parent->parent != NULL)
+		parent = parent->parent;
+
+	int32_t center_x = parent->layout.x + parent->layout.width / 2;
+	int32_t center_y = parent->layout.y + parent->layout.height / 2;
+	window->layout.x = center_x - window->layout.width / 2;
+	window->layout.y = center_y - window->layout.height / 2;
+	if (window->layout.x + window->layout.width > bounds.width)
+		window->layout.x = bounds.width - window->layout.width;
+	if (window->layout.y + window->layout.height > bounds.height)
+		window->layout.y = bounds.height - window->layout.height;
+
+	// TODO: limit the window size
+	if (window->layout.x < bounds.x)
+		window->layout.x = bounds.x;
+	if (window->layout.y < bounds.y)
+		window->layout.y = bounds.y;
+}
+
 static bool valid_rect(struct Rect r) {
 	return r.width >= 0 && r.height >= 0;
 }
 
 static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *obj) {
 	if (debug)
-		fprintf(stderr, "seats: %d; outputs: %d; spaces: %d; windows: %d\n",
+		fprintf(stderr, "MANAGE [seats: %d; outputs: %d; spaces: %d; windows: %d]\n",
 			wl_list_length(&wm.seats),
 			wl_list_length(&wm.outputs),
 			wl_list_length(&wm.spaces),
@@ -694,6 +725,17 @@ static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *o
 			layout_space(space, output->windowed);
 			wl_list_for_each(window, &wm.windows, link) {
 				if (window->space == output->active) {
+					if (window->parent != NULL) {
+						river_window_v1_use_csd(window->obj);
+						river_window_v1_set_tiled(window->obj, 0);
+						river_window_v1_set_dimension_bounds(window->obj,
+								output->windowed.width,
+								output->windowed.height);
+						river_window_v1_propose_dimensions(window->obj,
+								0,
+								0);
+						continue;
+					}
 					river_window_v1_use_ssd(window->obj);
 					river_window_v1_set_tiled(window->obj, 15);
 					if (valid_rect(window->layout))
@@ -714,9 +756,14 @@ static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *o
 	river_window_manager_v1_manage_finish(window_manager_v1);
 }
 
-// TODO: Can rendering state be changed during management? If so, this can be
-//       cleaned up quite a bit
 static void wm_handle_render_start(void *data, struct river_window_manager_v1 *window_manager_v1) {
+	if (debug)
+		fprintf(stderr, "RENDER [seats: %d; outputs: %d; spaces: %d; windows: %d]\n",
+			wl_list_length(&wm.seats),
+			wl_list_length(&wm.outputs),
+			wl_list_length(&wm.spaces),
+			wl_list_length(&wm.windows));
+
 	struct Output *output;
 	wl_list_for_each(output, &wm.outputs, link) {
 		struct Space *space = output->active;
@@ -727,6 +774,7 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 				continue;
 			}
 			if (space->fullscreen != NULL) {
+				// only show fullscreen window
 				if (space->fullscreen == window)
 					river_window_v1_show(window->obj);
 				else
@@ -734,6 +782,7 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 				continue;
 			}
 			if (space->maximized != NULL) {
+				// only show maximized window and any children
 				if (space->maximized == window) {
 					river_window_v1_show(window->obj);
 					river_node_v1_place_top(window->node);
@@ -742,16 +791,18 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 					river_node_v1_set_position(window->node,
 							window->layout.x,
 							window->layout.y);
-				} else {
+					continue;
+				} else if (window->parent == NULL) {
 					river_window_v1_hide(window->obj);
+					continue;
 				}
-				continue;
 			}
 			river_window_v1_show(window->obj);
-			river_node_v1_set_position(window->node,
-					window->layout.x,
-					window->layout.y);
-			if (window == window->space->focused) {
+			if (window->parent != NULL) {
+				place_child_window(window, output->windowed);
+				river_node_v1_place_top(window->node);
+				river_window_v1_set_borders(window->obj, 15, 0, 0, 0, 0, 0);
+			} else if (window == window->space->focused) {
 				river_node_v1_place_top(window->node);
 				river_window_v1_set_borders(window->obj, 15, 2,
 						0x77777777,
@@ -765,6 +816,9 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 						0x33333333,
 						0xFFFFFFFF);
 			}
+			river_node_v1_set_position(window->node,
+					window->layout.x,
+					window->layout.y);
 		}
 	}
 	river_window_manager_v1_render_finish(window_manager_v1);
