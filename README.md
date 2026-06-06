@@ -1,15 +1,15 @@
-# jrwm - A Junior Window Manager
+# JrWM - A Junior Window Manager
 
 _(Alternatively, jpco's river window manager)_
 
-jrwm is a tiling window manager written against [the river Wayland
+JrWM is a tiling window manager written against [the river Wayland
 compositor](https://isaacfreund.com/software/river/).
 
-jrwm is a dynamic tiling WM with a layout inspired by that of dwm.  The
-implementation is based on that of tinyrwm, although jrwm seems to be,
+JrWM is a dynamic tiling WM with a layout inspired by that of dwm.  The
+implementation is based on that of tinyrwm, although JrWM seems to be,
 surprisingly, more fastidiously protocol-rule-following than tinyrwm itself.
 
-jrwm is intended to be low-dependency, both to build and to run.
+JrWM is intended to be low-dependency, both to build and to run.
 
 
 ## Configuration
@@ -20,7 +20,7 @@ Bindings are defined in `bindings.c`, and window management policy is defined in
 
 ## Building and installation
 
-To build, jrwm requires:
+To build, JrWM requires:
  - a C99-capable compiler
  - GNU make (easy to make portable with small changes to the makefile)
  - the wayland-scanner utility (probably from your distribution's `wayland`
@@ -28,14 +28,14 @@ To build, jrwm requires:
  - libxkbcommon, or your distribution's version
 
 Building is as simple as `make`.  Installation is then `make install` as root.
-jrwm will be installed by default into the /usr/local/bin directory.
+JrWM will be installed by default into the /usr/local/bin directory.
 
-To run, jrwm requires river, of course.
+To run, JrWM requires river, of course.
 
 
 ## TODO
 
-jrwm is still in active development.  Desired improvements and additions
+JrWM is still in active development.  Desired improvements and additions
 include:
 
 -   Better multi-Space support: more Spaces, better Space/Output assignment,

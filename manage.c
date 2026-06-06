@@ -1,6 +1,6 @@
-// manage.c -- Core window layout logic for jrwm
+// manage.c -- Core window layout logic for JrWM
 //
-// jrwm is free software: you can redistribute it and/or modify it under the
+// JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
 // version.

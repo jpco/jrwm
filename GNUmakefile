@@ -1,6 +1,4 @@
-#
-# Basic make settings
-#
+# Basic make variables.
 
 CC	= gcc
 INSTALL	= /usr/bin/install -c
@@ -8,32 +6,27 @@ MKDIR_P	= /usr/bin/mkdir -p
 
 INSTALL_DIR	= /usr/local/bin
 
-CFLAGS	= -std=c99 -g -O2 -Wall -I$(GEN)
+CFLAGS	= -std=c99 -g -O2 -Wall -I$(PROTO)
 LDFLAGS	= -lwayland-client -lxkbcommon
-
-
-#
-# Generated file settings. Could be cleaner.
-#
-
-GEN	= ./gen
-PROTO	= ./protocol
-
-PROTOS	= $(PROTO)/river-layer-shell-v1.xml $(PROTO)/river-window-management-v1.xml $(PROTO)/river-xkb-bindings-v1.xml
-PROTOC	= $(GEN)/river-layer-shell-v1.c $(GEN)/river-window-management-v1.c $(GEN)/river-xkb-bindings-v1.c
-PROTOH	= $(GEN)/river-layer-shell-v1.h $(GEN)/river-window-management-v1.h $(GEN)/river-xkb-bindings-v1.h
-PROTOO	= $(GEN)/river-layer-shell-v1.o $(GEN)/river-window-management-v1.o $(GEN)/river-xkb-bindings-v1.o
-
-
-#
-# "Manual" targets.
-#
 
 HFILES	= jrwm.h
 CFILES	= jrwm.c manage.c bindings.c
 OFILES	= jrwm.o manage.o bindings.o
 
-jrwm	: $(OFILES) $(PROTOO)
+
+# Generated file variables. Could be cleaner.
+
+PROTO	= ./protocol
+
+PROTOS	= $(PROTO)/river-layer-shell-v1.xml $(PROTO)/river-window-management-v1.xml $(PROTO)/river-xkb-bindings-v1.xml
+PROTOC	= $(PROTOS:.xml=.c)
+PROTOH	= $(PROTOS:.xml=.h)
+PROTOO	= $(PROTOS:.xml=.o)
+
+
+# "Manual" targets.
+
+jrwm	: $(OFILES) $(PROTOO) $(PROTOC)
 	$(CC) -o jrwm $(LDFLAGS) -o jrwm $(OFILES) $(PROTOO)
 
 clean	:
@@ -43,21 +36,20 @@ install	: jrwm
 	$(MKDIR_P) $(INSTALL_DIR)
 	$(INSTALL) -s jrwm $(INSTALL_DIR)
 
-# dependencies
+
+# Dependencies (could be generated).
 
 jrwm.o		: jrwm.c jrwm.h $(PROTOH)
 bindings.o	: bindings.c jrwm.h $(PROTOH)
 manage.o	: manage.c jrwm.h $(PROTOH)
 
 
-#
-# Generated file recipes.  Should be made more portable.
-#
+# Generated file recipes.  This is the GNU extensions; should be made portable.
 
-$(GEN)/%.o	: $(GEN)/%.c $(GEN)/%.h
+$(PROTO)/%.o	: $(PROTO)/%.c $(PROTO)/%.h
 
-$(GEN)/%.c	: $(PROTO)/%.xml
+$(PROTO)/%.c	: $(PROTO)/%.xml
 	wayland-scanner private-code $< $@
 
-$(GEN)/%.h	: $(PROTO)/%.xml
+$(PROTO)/%.h	: $(PROTO)/%.xml
 	wayland-scanner client-header $< $@

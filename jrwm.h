@@ -1,6 +1,6 @@
-// This file is part of jrwm.
+// This file is part of JrWM.
 //
-// jrwm is free software: you can redistribute it and/or modify it under the
+// JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
 // version.
@@ -20,6 +20,9 @@
 #include <river-layer-shell-v1.h>
 #include <river-window-management-v1.h>
 #include <river-xkb-bindings-v1.h>
+
+
+// Types
 
 struct Rect {
 	int32_t x, y, width, height;
@@ -85,6 +88,9 @@ struct WindowManager {
 	struct wl_list seats;   // Seat
 	struct wl_list spaces;  // Space
 };
+
+
+// jrwm.c
 
 extern struct WindowManager wm;
 

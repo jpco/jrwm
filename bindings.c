@@ -1,6 +1,6 @@
-// bindings.c -- Key bindings in jrwm and the actions they trigger
+// bindings.c -- Key bindings in JrWM and the actions they trigger
 //
-// jrwm is free software: you can redistribute it and/or modify it under the
+// JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
 // version.
@@ -76,7 +76,7 @@ static char *spawn_brightness_down[]	= {"mediactl", "brightnessctl", "-e", "set"
 
 struct Binddef binds[] = {
 	{super, XKB_KEY_q, binding_close, {}},
-	{super, XKB_KEY_Escape, binding_exit, {}},
+	{super|shift, XKB_KEY_e, binding_exit, {}},
 	{super, XKB_KEY_j, binding_focus_next, {}},
 	{super, XKB_KEY_k, binding_focus_prev, {}},
 	{super|shift, XKB_KEY_j, binding_move_next, {}},

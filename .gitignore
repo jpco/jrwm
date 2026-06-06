@@ -1,3 +1,4 @@
 jrwm
-gen
 *.o
+protocol/*.c
+protocol/*.h
