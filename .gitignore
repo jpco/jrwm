@@ -1,4 +1,3 @@
 jrwm
-*.o
 protocol/*.c
 protocol/*.h
