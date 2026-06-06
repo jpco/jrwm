@@ -86,22 +86,6 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 	window->exit_fullscreen = true;
 }
 
-static void window_handle_maximize_requested(void *data, struct river_window_v1 *obj) {
-	struct Window *window = data;
-	if (window->space->maximized == NULL) {
-		window->space->maximized = window;
-		window->maximize = true;
-	}
-}
-
-static void window_handle_unmaximize_requested(void *data, struct river_window_v1 *obj) {
-	struct Window *window = data;
-	if (window->space->maximized == window) {
-		window->space->maximized = NULL;
-		window->unmaximize = true;
-	}
-}
-
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
 	struct Window *window = data;
 	window->layout.width = width;
@@ -113,6 +97,7 @@ static void window_handle_app_id(void *data, struct river_window_v1 *obj, const 
 static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {}
 static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
+static void window_handle_maximize_requested(void *data, struct river_window_v1 *obj) {}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
 static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {}
 static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
@@ -120,6 +105,7 @@ static void window_handle_pointer_resize_requested(void *data, struct river_wind
 static void window_handle_presentation_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
 static void window_handle_show_window_menu_requested(void *data, struct river_window_v1 *obj, int32_t x, int32_t y) {}
 static void window_handle_title(void *data, struct river_window_v1 *obj, const char *title) {}
+static void window_handle_unmaximize_requested(void *data, struct river_window_v1 *obj) {}
 static void window_handle_unreliable_pid(void *data, struct river_window_v1 *obj, int32_t unreliable_pid) {}
 
 const struct river_window_v1_listener river_window_listener = {
@@ -291,9 +277,11 @@ static void wm_init(void) {
 	// Create our two "demo" spaces.
 	// TODO: move me out?
 	struct Space *space = calloc(1, sizeof(struct Space));
+	space->layout = tiled_layout;
 	wl_list_insert(&wm.spaces, &space->link);
 
 	space = calloc(1, sizeof(struct Space));
+	space->layout = tiled_layout;
 	wl_list_insert(&wm.spaces, &space->link);
 }
 

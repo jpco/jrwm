@@ -29,57 +29,18 @@
 
 static uint32_t bordercolor[4] = COLOR(0x333333ff);
 static uint32_t focusedcolor[4] = COLOR(0x77aa99ff);
-static int borderpx = 2;
-static float splitratio = 0.52;
+
+static int monocle_borderpx = 0;
+
+static int tiled_borderpx = 2;
+static float tiled_splitratio = 0.52;
 
 
 // Private functions for window management and rendering
 
-static void layout_space(struct Space *space, struct Rect bounds) {
-	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
-	struct Window *window;
-	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space)
-			count++;
-	}
-	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space)
-			continue;
-		struct Rect wlay;
-		if (count == 1) {
-			// Only window
-			wlay.x = bounds.x + borderpx;
-			wlay.y = bounds.y + borderpx;
-			wlay.width = bounds.width - borderpx * 2;
-			wlay.height = bounds.height - borderpx * 2;
-		} else if (w == 0) {
-			// Left side "main" window
-			wlay.x = bounds.x + borderpx;
-			wlay.y = bounds.y + borderpx;
-			wlay.width = bounds.width * splitratio - borderpx * 2;
-			wlay.height = bounds.height - borderpx * 2;
-
-			rightwidth -= wlay.width + borderpx;
-		} else {
-			// Right side "stacked" windows
-			wlay.x = bounds.x + bounds.width - rightwidth + borderpx;
-			wlay.y = bounds.y + bounds.height - rightheight + borderpx;
-			wlay.width = rightwidth - borderpx * 2;
-			wlay.height = rightheight / (count - w) - borderpx * 2;
-
-			rightheight -= wlay.height + borderpx;
-		}
-		window->layout.x = wlay.x;
-		window->layout.y = wlay.y;
-		window->layout.width = wlay.width;
-		window->layout.height = wlay.height;
-		w++;
-	}
-}
-
 // Return the Output on which this Space is active, or NULL if it is not active
 // on any Output.
-static struct Output *active_output(struct Space *space) {
+static struct Output *active_on_output(struct Space *space) {
 	struct Output *output = NULL;
 	if (space->output != NULL && space->output->active == space)
 		output = space->output;
@@ -130,8 +91,7 @@ extern void place_window(struct Window *window) {
 	wl_list_for_each(seat, &wm.seats, link) {
 		struct Space *space = seat->focused;
 		window->space = space;
-		if (space->maximized == NULL)
-			space->focused = window;
+		space->focused = window;
 	}
 }
 
@@ -139,8 +99,6 @@ extern void place_window(struct Window *window) {
 extern void replace_window(struct Window *window) {
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
-		if (space->maximized == window)
-			space->maximized = NULL;
 		if (space->focused == window) {
 			struct Window *r, *replacement = NULL;
 			wl_list_for_each(r, &wm.windows, link) {
@@ -160,18 +118,64 @@ extern void place_seat(struct Seat *seat) {
 }
 
 
+// Space layout functions
+
+extern void monocle_layout(struct Space *space, struct Rect bounds) {
+	struct Window *window;
+	wl_list_for_each(window, &wm.windows, link) {
+		if (window->space != space)
+			continue;
+		window->layout.x = bounds.x + monocle_borderpx;
+		window->layout.y = bounds.y + monocle_borderpx;
+		window->layout.width = bounds.width - monocle_borderpx * 2;
+		window->layout.height = bounds.height - monocle_borderpx * 2;
+	}
+}
+
+extern void tiled_layout(struct Space *space, struct Rect bounds) {
+	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
+	struct Window *window;
+	wl_list_for_each(window, &wm.windows, link) {
+		if (window->space == space)
+			count++;
+	}
+	wl_list_for_each(window, &wm.windows, link) {
+		if (window->space != space)
+			continue;
+		struct Rect wlay;
+		if (count == 1) {
+			// Only window
+			wlay.x = bounds.x + tiled_borderpx;
+			wlay.y = bounds.y + tiled_borderpx;
+			wlay.width = bounds.width - tiled_borderpx * 2;
+			wlay.height = bounds.height - tiled_borderpx * 2;
+		} else if (w == 0) {
+			// Left side "main" window
+			wlay.x = bounds.x + tiled_borderpx;
+			wlay.y = bounds.y + tiled_borderpx;
+			wlay.width = bounds.width * tiled_splitratio - tiled_borderpx * 2;
+			wlay.height = bounds.height - tiled_borderpx * 2;
+
+			rightwidth -= wlay.width + tiled_borderpx;
+		} else {
+			// Right side "stacked" windows
+			wlay.x = bounds.x + bounds.width - rightwidth + tiled_borderpx;
+			wlay.y = bounds.y + bounds.height - rightheight + tiled_borderpx;
+			wlay.width = rightwidth - tiled_borderpx * 2;
+			wlay.height = rightheight / (count - w) - tiled_borderpx * 2;
+
+			rightheight -= wlay.height + tiled_borderpx;
+		}
+		window->layout.x = wlay.x;
+		window->layout.y = wlay.y;
+		window->layout.width = wlay.width;
+		window->layout.height = wlay.height;
+		w++;
+	}
+}
+
 
 // Manage sequence/render sequence functions
-
-// Per-Space focus is technically just internal bookkeeping; this propagates the
-// "real", per-Seat, focus state to the compositor during each manage sequence.
-// Called at the end of the sequence so that other functions can modify focus
-extern void seat_do_focus(struct Seat *seat) {
-	if (seat->focused->focused != NULL)
-		river_seat_v1_focus_window(seat->obj, seat->focused->focused->obj);
-	else
-		river_seat_v1_clear_focus(seat->obj);
-}
 
 // Perform actions for a Window that have been called for by some event, but
 // must be done during the manage sequence
@@ -201,49 +205,41 @@ extern void window_do_deferred(struct Window *window) {
 		river_window_v1_inform_not_fullscreen(window->obj);
 		window->exit_fullscreen = false;
 	}
-	if (window->maximize) {
-		river_window_v1_inform_maximized(window->obj);
-		window->maximize = false;
-	}
-	if (window->unmaximize) {
-		river_window_v1_inform_unmaximized(window->obj);
-		window->unmaximize = false;
-	}
+}
+
+// Per-Space focus is technically just internal bookkeeping; this function
+// propagates the "real", per-Seat, focus state to the compositor during each
+// manage sequence.
+// Called at the end of the sequence so that other functions can modify focus
+extern void seat_do_focus(struct Seat *seat) {
+	if (seat->focused->focused != NULL)
+		river_seat_v1_focus_window(seat->obj, seat->focused->focused->obj);
+	else
+		river_seat_v1_clear_focus(seat->obj);
 }
 
 // Perform the main, per-Space, manage sequence logic
 extern void manage_space(struct Space *space) {
-	struct Output *output = active_output(space);
+	struct Window *window;
+	struct Output *output = active_on_output(space);
 	if (output == NULL)
 		return;
-	struct Window *window;
-	if (space->maximized != NULL) {
-		window = space->maximized;
-		window->layout.x = output->windowed.x;
-		window->layout.y = output->windowed.y;
-		window->layout.width = output->windowed.width;
-		window->layout.height = output->windowed.height;
-		river_window_v1_propose_dimensions(window->obj,
-				window->layout.width,
-				window->layout.height);
-	} else {
-		layout_space(space, output->windowed);
-		wl_list_for_each(window, &wm.windows, link) {
-			if (window->space == output->active) {
-				river_window_v1_use_ssd(window->obj);
-				river_window_v1_set_tiled(window->obj, 15);
-				if (valid_rect(window->layout))
-					river_window_v1_propose_dimensions(window->obj,
-							window->layout.width,
-							window->layout.height);
-			}
+	space->layout(space, output->windowed);
+	wl_list_for_each(window, &wm.windows, link) {
+		if (window->space == output->active) {
+			river_window_v1_use_ssd(window->obj);
+			river_window_v1_set_tiled(window->obj, 15);
+			if (valid_rect(window->layout))
+				river_window_v1_propose_dimensions(window->obj,
+						window->layout.width,
+						window->layout.height);
 		}
 	}
 }
 
 // Perform the main, per-Space, render sequence logic
 extern void render_space(struct Space *space) {
-	struct Output *output = active_output(space);
+	struct Output *output = active_on_output(space);
 	if (output == NULL)
 		return;
 	struct Window *window;
@@ -252,31 +248,19 @@ extern void render_space(struct Space *space) {
 			river_window_v1_hide(window->obj);
 			continue;
 		}
-		if (space->maximized != NULL) {
-			// only show maximized window and any children
-			if (space->maximized == window) {
-				river_window_v1_show(window->obj);
-				river_node_v1_place_top(window->node);
-				river_window_v1_set_borders(window->obj, 15, 0,
-						0, 0, 0, 0);
-				river_node_v1_set_position(window->node,
-						window->layout.x,
-						window->layout.y);
-			} else {
-				river_window_v1_hide(window->obj);
-			}
-			continue;
-		}
 		river_window_v1_show(window->obj);
+		int borderpx = tiled_borderpx;
+		if (space->layout == monocle_layout)
+			borderpx = monocle_borderpx;
 		if (window == window->space->focused) {
 			river_node_v1_place_top(window->node);
-			river_window_v1_set_borders(window->obj, 15, 2,
+			river_window_v1_set_borders(window->obj, 15, borderpx,
 					focusedcolor[0],
 					focusedcolor[1],
 					focusedcolor[2],
 					focusedcolor[3]);
 		} else {
-			river_window_v1_set_borders(window->obj, 15, 2,
+			river_window_v1_set_borders(window->obj, 15, borderpx,
 					bordercolor[0],
 					bordercolor[1],
 					bordercolor[2],

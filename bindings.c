@@ -59,7 +59,7 @@ static void binding_focus_next(struct Seat *seat, union Arg arg);
 static void binding_focus_prev(struct Seat *seat, union Arg arg);
 static void binding_move_next(struct Seat *seat, union Arg arg);
 static void binding_move_prev(struct Seat *seat, union Arg arg);
-static void binding_toggle_maximize(struct Seat *seat, union Arg arg);
+static void binding_toggle_monocle(struct Seat *seat, union Arg arg);
 static void binding_switch_space(struct Seat *seat, union Arg arg);
 
 
@@ -84,7 +84,7 @@ struct Binddef binds[] = {
 	{super, XKB_KEY_k, binding_focus_prev, {}},
 	{super|shift, XKB_KEY_j, binding_move_next, {}},
 	{super|shift, XKB_KEY_k, binding_move_prev, {}},
-	{super, XKB_KEY_m, binding_toggle_maximize, {}},
+	{super, XKB_KEY_m, binding_toggle_monocle, {}},
 	{super, XKB_KEY_s, binding_switch_space, {}},
 
 	{super, XKB_KEY_Return, binding_spawn, {.v = spawn_foot}},
@@ -127,8 +127,6 @@ static void binding_focus_next(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
 		return;
-	if (space->maximized != NULL)
-		return;
 	bool next = false, first = true;
 	struct Window *w = NULL, *fw = NULL;
 	wl_list_for_each(w, &wm.windows, link) {
@@ -151,8 +149,6 @@ static void binding_focus_next(struct Seat *seat, union Arg arg) {
 static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
-		return;
-	if (space->maximized != NULL)
 		return;
 	bool next = false, first = true;
 	struct Window *w = NULL, *fw = NULL;
@@ -219,19 +215,14 @@ static void binding_move_prev(struct Seat *seat, union Arg arg) {
 		wl_list_insert(wm.windows.prev, &curr->link);
 }
 
-static void binding_toggle_maximize(struct Seat *seat, union Arg arg) {
+static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
 		return;
-	if (space->maximized != NULL && space->maximized != space->focused)
-		return;
-	if (space->maximized == NULL) {
-		space->maximized = space->focused;
-		space->focused->maximize = true;
-	} else {
-		space->maximized = NULL;
-		space->focused->unmaximize = true;
-	}
+	if (space->layout == tiled_layout)
+		space->layout = monocle_layout;
+	else
+		space->layout = tiled_layout;
 }
 
 static void binding_switch_space(struct Seat *seat, union Arg arg) {

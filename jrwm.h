@@ -30,7 +30,7 @@ struct Rect {
 	int32_t x, y, width, height;
 };
 
-// A Space represents a collection of Windows on an Output.
+// A Space represents a collection of Windows on an Output with a layout.
 // Space is the "clearing-house" type for the WM; there MUST be at least one
 // Space for everything else to point at, and there SHOULD be at least one Space
 // per Output.
@@ -39,7 +39,7 @@ struct Space {
 	struct Output *output;  // May be null
 	struct Window *focused; // May be null
 
-	struct Window *maximized;   // Usually null (TODO: do this via layouts?)
+	void (*layout)(struct Space *space, struct Rect bounds);
 };
 
 // An Output is like an actual physical display.
@@ -64,8 +64,6 @@ struct Window {
 	bool close;             // window_v1.close
 	bool fullscreen;        // window_v1.inform_fullscreen
 	bool exit_fullscreen;   // window_v1.inform_not_fullscreen
-	bool maximize;          // window_v1.inform_maximized
-	bool unmaximize;        // window_v1.inform_unmaximized
 
 	// Information for the render sequence (TODO: necessary?)
 	struct Rect layout;
@@ -101,6 +99,10 @@ extern struct river_layer_shell_v1 *layer_shell_v1;
 
 
 // layout.c
+
+// Layout functions
+extern void tiled_layout(struct Space *, struct Rect);
+extern void monocle_layout(struct Space *, struct Rect);
 
 // Called on creation of objects to manage internal pointers
 extern void place_output(struct Output *);
