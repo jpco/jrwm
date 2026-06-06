@@ -14,9 +14,6 @@
 //
 // Copyright 2026 Isaac Freund, 2026 Jack Conger.  All rights reserved.
 
-#include <stdbool.h>
-#include <stdio.h>
-
 #include "jrwm.h"
 
 // The main WM loops, which reflect in-memory state out to the compositor.
@@ -96,6 +93,36 @@ extern void seat_do_focus(struct Seat *seat) {
 		river_seat_v1_clear_focus(seat->obj);
 }
 
+extern void window_do_deferred(struct Window *window) {
+	if (window->set_capabilities) {
+		river_window_v1_set_capabilities(window->obj,
+				RIVER_WINDOW_V1_CAPABILITIES_MAXIMIZE |
+				RIVER_WINDOW_V1_CAPABILITIES_FULLSCREEN);
+		window->set_capabilities = false;
+	}
+	if (window->close) {
+		river_window_v1_close(window->obj);
+		window->close = false;
+	}
+	if (window->fullscreen) {
+		river_window_v1_inform_fullscreen(window->obj);
+		window->fullscreen = false;
+	}
+	if (window->exit_fullscreen) {
+		river_window_v1_exit_fullscreen(window->obj);
+		river_window_v1_inform_not_fullscreen(window->obj);
+		window->exit_fullscreen = false;
+	}
+	if (window->maximize) {
+		river_window_v1_inform_maximized(window->obj);
+		window->maximize = false;
+	}
+	if (window->unmaximize) {
+		river_window_v1_inform_unmaximized(window->obj);
+		window->unmaximize = false;
+	}
+}
+
 extern void manage_output(struct Output *output) {
 	struct Window *window;
 	struct Space *space = output->active;
@@ -133,36 +160,6 @@ extern void manage_output(struct Output *output) {
 							window->layout.height);
 			}
 		}
-	}
-}
-
-extern void window_do_deferred(struct Window *window) {
-	if (window->set_capabilities) {
-		river_window_v1_set_capabilities(window->obj,
-				RIVER_WINDOW_V1_CAPABILITIES_MAXIMIZE |
-				RIVER_WINDOW_V1_CAPABILITIES_FULLSCREEN);
-		window->set_capabilities = false;
-	}
-	if (window->close) {
-		river_window_v1_close(window->obj);
-		window->close = false;
-	}
-	if (window->fullscreen) {
-		river_window_v1_inform_fullscreen(window->obj);
-		window->fullscreen = false;
-	}
-	if (window->exit_fullscreen) {
-		river_window_v1_exit_fullscreen(window->obj);
-		river_window_v1_inform_not_fullscreen(window->obj);
-		window->exit_fullscreen = false;
-	}
-	if (window->maximize) {
-		river_window_v1_inform_maximized(window->obj);
-		window->maximize = false;
-	}
-	if (window->unmaximize) {
-		river_window_v1_inform_unmaximized(window->obj);
-		window->unmaximize = false;
 	}
 }
 

@@ -17,6 +17,8 @@
 #ifndef JRWM_H
 #define JRWM_H
 
+#include <stdbool.h>
+
 #include <river-layer-shell-v1.h>
 #include <river-window-management-v1.h>
 #include <river-xkb-bindings-v1.h>
@@ -101,15 +103,17 @@ extern struct river_layer_shell_v1 *layer_shell_v1;
 
 // manage.c
 
-extern void seat_do_focus(struct Seat *seat);
-extern void window_do_deferred(struct Window *window);
-extern void manage_output(struct Output *output);
-extern void render_output(struct Output *output);
+extern void seat_do_focus(struct Seat *);
+extern void window_do_deferred(struct Window *);
+
+extern void manage_output(struct Output *);
+extern void render_output(struct Output *);
+
 
 // bindings.c
 
-extern void init_xkb_bindings(struct Seat *seat);
-extern void enable_xkb_bindings(struct Seat *seat);
-extern void remove_xkb_bindings(struct Seat *seat);
+extern void init_xkb_bindings(struct Seat *);
+extern void enable_xkb_bindings(struct Seat *);
+extern void remove_xkb_bindings(struct Seat *);
 
 #endif
