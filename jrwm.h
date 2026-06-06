@@ -1,5 +1,5 @@
-// This file is part of JrWM.
-//
+// jrwm.h -- Header file for JrWM.
+
 // JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
@@ -48,7 +48,7 @@ struct Output {
 	struct river_output_v1 *obj;
 	struct river_layer_shell_output_v1 *ls;
 
-	struct Rect windowed;
+	struct Rect windowed;  // Non-exclusive area of the Output
 
 	struct Space *active;
 };
@@ -70,7 +70,6 @@ struct Window {
 	// information for render sequence
 	struct Rect layout;
 
-	struct Window *parent; // usually null
 	struct Space *space;
 };
 

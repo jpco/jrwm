@@ -1,5 +1,8 @@
 // manage.c -- Core window layout logic for JrWM
-//
+
+// This file is responsible for the layout and rendering of windows, making it
+// responsible for much of the core "look and feel" of the WM.
+
 // JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
@@ -16,20 +19,31 @@
 
 #include "jrwm.h"
 
-// The main WM loops, which reflect in-memory state out to the compositor.
 
+// Settings for layout and borders
+
+#define	COLOR(hex)	{ ((hex >> 24) & 0xFF) * (UINT32_MAX / 255), \
+			  ((hex >> 16) & 0xFF) * (UINT32_MAX / 255), \
+			  ((hex >>  8) & 0xFF) * (UINT32_MAX / 255), \
+			  ( hex        & 0xFF) * (UINT32_MAX / 255) }
+
+static uint32_t bordercolor[4] = COLOR(0x333333ff);
+static uint32_t focusedcolor[4] = COLOR(0x77aa99ff);
 static int borderpx = 2;
 static float splitratio = 0.52;
+
+
+// The main WM loops, which lay out windows and render borders.
 
 static void layout_space(struct Space *space, struct Rect bounds) {
 	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space && window->parent == NULL)
+		if (window->space == space)
 			count++;
 	}
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space || window->parent != NULL)
+		if (window->space != space)
 			continue;
 		struct Rect wlay;
 		if (count == 1) {
@@ -61,25 +75,6 @@ static void layout_space(struct Space *space, struct Rect bounds) {
 		window->layout.height = wlay.height;
 		w++;
 	}
-}
-
-static void place_child_window(struct Window *window, struct Rect bounds) {
-	struct Window *parent = window;
-	while (parent->parent != NULL)
-		parent = parent->parent;
-
-	int32_t center_x = parent->layout.x + parent->layout.width / 2;
-	int32_t center_y = parent->layout.y + parent->layout.height / 2;
-	window->layout.x = center_x - window->layout.width / 2;
-	window->layout.y = center_y - window->layout.height / 2;
-	if (window->layout.x + window->layout.width > bounds.width)
-		window->layout.x = bounds.width - window->layout.width;
-	if (window->layout.y + window->layout.height > bounds.height)
-		window->layout.y = bounds.height - window->layout.height;
-	if (window->layout.x < bounds.x)
-		window->layout.x = bounds.x;
-	if (window->layout.y < bounds.y)
-		window->layout.y = bounds.y;
 }
 
 static bool valid_rect(struct Rect r) {
@@ -141,17 +136,6 @@ extern void manage_output(struct Output *output) {
 		layout_space(space, output->windowed);
 		wl_list_for_each(window, &wm.windows, link) {
 			if (window->space == output->active) {
-				if (window->parent != NULL) {
-					river_window_v1_use_csd(window->obj);
-					river_window_v1_set_tiled(window->obj, 0);
-					river_window_v1_set_dimension_bounds(window->obj,
-							output->windowed.width,
-							output->windowed.height);
-					river_window_v1_propose_dimensions(window->obj,
-							0,
-							0);
-					continue;
-				}
 				river_window_v1_use_ssd(window->obj);
 				river_window_v1_set_tiled(window->obj, 15);
 				if (valid_rect(window->layout))
@@ -189,30 +173,25 @@ extern void render_output(struct Output *output) {
 				river_node_v1_set_position(window->node,
 						window->layout.x,
 						window->layout.y);
-				continue;
-			} else if (window->parent == NULL) {
+			} else {
 				river_window_v1_hide(window->obj);
-				continue;
 			}
+			continue;
 		}
 		river_window_v1_show(window->obj);
-		if (window->parent != NULL) {
-			place_child_window(window, output->windowed);
-			river_node_v1_place_top(window->node);
-			river_window_v1_set_borders(window->obj, 15, 0, 0, 0, 0, 0);
-		} else if (window == window->space->focused) {
+		if (window == window->space->focused) {
 			river_node_v1_place_top(window->node);
 			river_window_v1_set_borders(window->obj, 15, 2,
-					0x77777777,
-					0xAAAAAAAA,
-					0x99999999,
-					0xFFFFFFFF);
+					focusedcolor[0],
+					focusedcolor[1],
+					focusedcolor[2],
+					focusedcolor[3]);
 		} else {
 			river_window_v1_set_borders(window->obj, 15, 2,
-					0x33333333,
-					0x33333333,
-					0x33333333,
-					0xFFFFFFFF);
+					bordercolor[0],
+					bordercolor[1],
+					bordercolor[2],
+					bordercolor[3]);
 		}
 		river_node_v1_set_position(window->node,
 				window->layout.x,

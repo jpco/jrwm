@@ -1,5 +1,10 @@
 // jrwm.c -- Main server file for JrWM
 
+// This file is meant to have as little "interesting" logic as possible;
+// instead, it should only be responsible for handling the protocol layer,
+// managing memory for the core data structures, and  dispatching to functions
+// in other, less boilerplate-burdened files whenever it can.
+
 // JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
@@ -27,12 +32,12 @@ struct river_window_manager_v1 *window_manager_v1;
 struct river_xkb_bindings_v1 *xkb_bindings_v1;
 struct river_layer_shell_v1 *layer_shell_v1;
 
-
 // Listeners and event handlers for the core types
 
 static void output_handle_removed(void *data, struct river_output_v1 *obj) {
 	struct Output *output = data;
 
+	// TODO: move me out
 	struct Output *replacement = NULL, *r;
 	wl_list_for_each(r, &wm.outputs, link)
 		if (r != output)
@@ -75,6 +80,7 @@ const struct river_layer_shell_output_v1_listener ls_output_listener = {
 static void window_handle_closed(void *data, struct river_window_v1 *obj) {
 	struct Window *window = data;
 
+	// TODO: move me out
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
 		if (space->maximized == window)
@@ -128,14 +134,6 @@ static void window_handle_unmaximize_requested(void *data, struct river_window_v
 	}
 }
 
-static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {
-	struct Window *window = data;
-	if (parent != NULL) {
-		window->parent = river_window_v1_get_user_data(parent);
-	} else {
-		window->parent = NULL;
-	}
-}
 
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
 	struct Window *window = data;
@@ -149,6 +147,7 @@ static void window_handle_decoration_hint(void *data, struct river_window_v1 *ob
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {}
 static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
+static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {}
 static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
 static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {}
 static void window_handle_presentation_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
@@ -232,6 +231,7 @@ static void wm_handle_output(void *data, struct river_window_manager_v1 *obj, st
 	output->obj = river_output;
 	output->ls = river_layer_shell_v1_get_output(layer_shell_v1, output->obj);
 
+	// TODO: move me out
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
 		output->active = space;
@@ -257,6 +257,7 @@ static void wm_handle_seat(void *data, struct river_window_manager_v1 *obj, stru
 	wl_list_init(&seat->xkb_bindings);
 	init_xkb_bindings(seat);
 
+	// TODO: move me out
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
 		seat->focused = space;
@@ -273,6 +274,7 @@ static void wm_handle_window(void *data, struct river_window_manager_v1 *obj, st
 	window->node = river_window_v1_get_node(window->obj);
 	window->set_capabilities = true;
 
+	// TODO: move me out
 	struct Seat *seat;
 	wl_list_for_each(seat, &wm.seats, link) {
 		struct Space *space = seat->focused;
@@ -344,6 +346,7 @@ static void wm_init(void) {
 	wl_list_init(&wm.spaces);
 
 	// Create our two "demo" spaces.
+	// TODO: move me out?
 	struct Space *space = calloc(1, sizeof(struct Space));
 	wl_list_insert(&wm.spaces, &space->link);
 

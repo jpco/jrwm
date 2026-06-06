@@ -1,5 +1,8 @@
 // bindings.c -- Key bindings in JrWM and the actions they trigger
-//
+
+// This file is responsible for key bindings and performing actions based on
+// those key bindings, including configuring the programs which are spawned.
+
 // JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
 // Foundation, either version 3 of the License, or (at your option) any later
@@ -60,6 +63,7 @@ static void binding_toggle_maximize(struct Seat *seat, union Arg arg);
 static void binding_switch_space(struct Seat *seat, union Arg arg);
 
 
+// TODO: De-personalize these so that they are actually useful for other people.
 static char *spawn_foot[]	= {"footclient", NULL};
 static char *spawn_rofi[]	= {"rofi", "-show", "combi", NULL};
 static char *spawn_mute[]	= {"mediactl", "pamixer", "--mute", "--set-volume", "0", NULL};
@@ -170,12 +174,12 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 
 static void binding_move_next(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
-	if (space->focused == NULL || space->focused->parent != NULL)
+	if (space->focused == NULL)
 		return;
 	bool next = false;
 	struct Window *curr = space->focused, *target = NULL, *w = NULL;
 	wl_list_for_each(w, &wm.windows, link) {
-		if (w->space != space || w->parent != NULL)
+		if (w->space != space)
 			continue;
 		if (next) {
 			target = w;
@@ -194,12 +198,12 @@ static void binding_move_next(struct Seat *seat, union Arg arg) {
 
 static void binding_move_prev(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
-	if (space->focused == NULL || space->focused->parent != NULL)
+	if (space->focused == NULL)
 		return;
 	bool next = false;
 	struct Window *curr = space->focused, *target = NULL, *w = NULL;
 	wl_list_for_each_reverse(w, &wm.windows, link) {
-		if (w->space != space || w->parent != NULL)
+		if (w->space != space)
 			continue;
 		if (next) {
 			target = w;

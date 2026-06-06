@@ -52,9 +52,8 @@ include:
 
 -   Better multi-Space support: more Spaces, better Space/Output assignment,
     dynamic/configurable Spaces
--   Better floating window support, at least to improve the experience with
-    dialog windows
--   Behavioral tweaks to more closely match other WMs and expectations
+-   Floating window support, and "dialog" windows as floating windows
+-   Follow expectations from other WMs re: focus, window movement, etc.
 -   (Optional) focus-follows-pointer and pointer-follows-focus behavior, since
     some people like that stuff
 -   Actual configuration, probably via IPC or API
