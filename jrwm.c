@@ -78,18 +78,12 @@ static void window_handle_closed(void *data, struct river_window_v1 *obj) {
 
 static void window_handle_fullscreen_requested(void *data, struct river_window_v1 *obj, struct river_output_v1 *river_output) {
 	struct Window *window = data;
-	if (window->space->fullscreen == NULL) {
-		window->space->fullscreen = window;
-		window->fullscreen = true;
-	}
+	window->fullscreen = true;
 }
 
 static void window_handle_exit_fullscreen_requested(void *data, struct river_window_v1 *obj) {
 	struct Window *window = data;
-	if (window->space->fullscreen == window) {
-		window->space->fullscreen = NULL;
-		window->exit_fullscreen = true;
-	}
+	window->exit_fullscreen = true;
 }
 
 static void window_handle_maximize_requested(void *data, struct river_window_v1 *obj) {
@@ -237,15 +231,16 @@ static void wm_handle_window(void *data, struct river_window_manager_v1 *obj, st
 
 static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *obj) {
 	struct Window *window;
-	struct Seat *seat;
-	struct Space *space;
-
 	wl_list_for_each(window, &wm.windows, link) {
 		window_do_deferred(window);
 	}
+
+	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
 		manage_space(space);
 	}
+
+	struct Seat *seat;
 	wl_list_for_each(seat, &wm.seats, link) {
 		enable_xkb_bindings(seat);
 		seat_do_focus(seat);

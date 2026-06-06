@@ -32,15 +32,14 @@ struct Rect {
 
 // A Space represents a collection of Windows on an Output.
 // Space is the "clearing-house" type for the WM; there MUST be at least one
-// Space for everything else to point at (and there SHOULD be at least one Space
-// per Output).
+// Space for everything else to point at, and there SHOULD be at least one Space
+// per Output.
 struct Space {
 	struct wl_list link;    // WindowManager.spaces
 	struct Output *output;  // May be null
 	struct Window *focused; // May be null
 
-	struct Window *fullscreen;  // Usually null (TODO: remove?)
-	struct Window *maximized;   // Usually null (TODO: remove?)
+	struct Window *maximized;   // Usually null (TODO: do this via layouts?)
 };
 
 // An Output is like an actual physical display.

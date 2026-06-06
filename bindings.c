@@ -103,6 +103,7 @@ struct Binddef binds[] = {
 
 
 // Binding function definitions
+// None of these functions run during a manage or render sequence
 
 static void binding_spawn(struct Seat *seat, union Arg arg) {
 	if (fork() == 0) {
@@ -126,7 +127,7 @@ static void binding_focus_next(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
 		return;
-	if (space->maximized != NULL || space->fullscreen != NULL)
+	if (space->maximized != NULL)
 		return;
 	bool next = false, first = true;
 	struct Window *w = NULL, *fw = NULL;
@@ -151,7 +152,7 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
 		return;
-	if (space->maximized != NULL || space->fullscreen != NULL)
+	if (space->maximized != NULL)
 		return;
 	bool next = false, first = true;
 	struct Window *w = NULL, *fw = NULL;

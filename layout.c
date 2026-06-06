@@ -93,7 +93,10 @@ static bool valid_rect(struct Rect r) {
 
 // Handle creation/deletion of core objects
 // (focus Seats, associate Spaces with Outputs, place Windows in Spaces, etc.)
+//  - These run before the relevant wl_list in wm is updated
+//  - None of these run during a manage or render sequence
 
+// Find a Space for this Output
 extern void place_output(struct Output *output) {
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
@@ -108,6 +111,7 @@ extern void place_output(struct Output *output) {
 	}
 }
 
+// Replace this Output with another for any relevant Spaces
 extern void replace_output(struct Output *output) {
 	struct Output *replacement = NULL, *r;
 	wl_list_for_each(r, &wm.outputs, link)
@@ -120,23 +124,23 @@ extern void replace_output(struct Output *output) {
 			space->output = replacement;
 }
 
+// Find a Space for this Window
 extern void place_window(struct Window *window) {
 	struct Seat *seat;
 	wl_list_for_each(seat, &wm.seats, link) {
 		struct Space *space = seat->focused;
 		window->space = space;
-		if (space->maximized == NULL && space->fullscreen == NULL)
+		if (space->maximized == NULL)
 			space->focused = window;
 	}
 }
 
+// Replace this Window with another for any relevant Spaces
 extern void replace_window(struct Window *window) {
 	struct Space *space;
 	wl_list_for_each(space, &wm.spaces, link) {
 		if (space->maximized == window)
 			space->maximized = NULL;
-		if (space->fullscreen == window)
-			space->fullscreen = NULL;
 		if (space->focused == window) {
 			struct Window *r, *replacement = NULL;
 			wl_list_for_each(r, &wm.windows, link) {
@@ -148,12 +152,11 @@ extern void replace_window(struct Window *window) {
 	}
 }
 
-// There is no replace_seat, as nothing points to a Seat
+// Find an active Space for this Seat to focus
 extern void place_seat(struct Seat *seat) {
-	struct Space *space;
-	wl_list_for_each(space, &wm.spaces, link) {
-		seat->focused = space;
-	}
+	struct Output *output;
+	wl_list_for_each(output, &wm.outputs, link)
+		seat->focused = output->active;
 }
 
 
@@ -184,7 +187,13 @@ extern void window_do_deferred(struct Window *window) {
 		window->close = false;
 	}
 	if (window->fullscreen) {
-		river_window_v1_inform_fullscreen(window->obj);
+		struct Space *space = window->space;
+		if (space->output != NULL &&
+				space->output->active == space) {
+			river_window_v1_inform_fullscreen(window->obj);
+			river_window_v1_fullscreen(window->obj,
+					space->output->obj);
+		}
 		window->fullscreen = false;
 	}
 	if (window->exit_fullscreen) {
@@ -208,9 +217,7 @@ extern void manage_space(struct Space *space) {
 	if (output == NULL)
 		return;
 	struct Window *window;
-	if (space->fullscreen != NULL) {
-		river_window_v1_fullscreen(space->fullscreen->obj, output->obj);
-	} else if (space->maximized != NULL) {
+	if (space->maximized != NULL) {
 		window = space->maximized;
 		window->layout.x = output->windowed.x;
 		window->layout.y = output->windowed.y;
@@ -243,14 +250,6 @@ extern void render_space(struct Space *space) {
 	wl_list_for_each(window, &wm.windows, link) {
 		if (window->space != space) {
 			river_window_v1_hide(window->obj);
-			continue;
-		}
-		if (space->fullscreen != NULL) {
-			// only show fullscreen window
-			if (space->fullscreen == window)
-				river_window_v1_show(window->obj);
-			else
-				river_window_v1_hide(window->obj);
 			continue;
 		}
 		if (space->maximized != NULL) {
