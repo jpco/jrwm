@@ -103,10 +103,10 @@ extern void manage_output(struct Output *output) {
 		river_window_v1_fullscreen(space->fullscreen->obj, output->obj);
 	} else if (space->maximized != NULL) {
 		window = space->maximized;
-		window->layout.x = output->windowed.x + borderpx;
-		window->layout.y = output->windowed.y + borderpx;
-		window->layout.width = output->windowed.width - borderpx*2;
-		window->layout.height = output->windowed.height - borderpx*2;
+		window->layout.x = output->windowed.x;
+		window->layout.y = output->windowed.y;
+		window->layout.width = output->windowed.width;
+		window->layout.height = output->windowed.height;
 		river_window_v1_propose_dimensions(window->obj,
 				window->layout.width,
 				window->layout.height);
@@ -187,6 +187,12 @@ extern void render_output(struct Output *output) {
 			if (space->maximized == window) {
 				river_window_v1_show(window->obj);
 				river_node_v1_place_top(window->node);
+				river_window_v1_set_borders(window->obj, 15, 0,
+						0, 0, 0, 0);
+				river_node_v1_set_position(window->node,
+						window->layout.x,
+						window->layout.y);
+				continue;
 			} else if (window->parent == NULL) {
 				river_window_v1_hide(window->obj);
 				continue;
