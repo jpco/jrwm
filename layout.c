@@ -60,19 +60,19 @@ static bool valid_rect(struct Rect r) {
 // Find a Space for this Output to activate
 extern void place_output(struct Output *output) {
 	struct Space *space;
-	wl_list_for_each(space, &wm.spaces, link) {
-		output->active = space;
+	wl_list_for_each(space, &wm.spaces, link)
 		if (space->output == NULL)
 			space->output = output;
-	}
 
 	struct Seat *seat;
-	wl_list_for_each(seat, &wm.seats, link) {
+	wl_list_for_each(seat, &wm.seats, link)
 		if (output == seat->focused->output)
 			output->active = seat->focused;
-	}
 
-	// FIXME: fallback
+	// Fallback if necessary
+	if (output->active == NULL)
+		wl_list_for_each(space, &wm.spaces, link)
+			output->active = space;
 }
 
 // Replace this Output with another for any relevant Spaces
@@ -91,13 +91,19 @@ extern void replace_output(struct Output *output) {
 // Find a Space for this Window to be in
 extern void place_window(struct Window *window) {
 	struct Seat *seat;
+	struct Space *space;
 	wl_list_for_each(seat, &wm.seats, link) {
-		struct Space *space = seat->focused;
+		space = seat->focused;
 		window->space = space;
 		space->focused = window;
 	}
 
-	// TODO: Fallback?  When do we ever have no Seats?
+	// Fallback if necessary
+	if (window->space == NULL)
+		wl_list_for_each(space, &wm.spaces, link)
+			window->space = space;
+	if (window->space->focused == NULL)
+		window->space->focused = window;
 }
 
 // Replace this Window with another for any relevant Spaces
