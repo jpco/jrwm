@@ -2,7 +2,7 @@
 
 _(Alternatively, jpco's river window manager)_
 
-JrWM is a tiling window manager written against [the river Wayland
+JrWM is a tiling window manager written for [the river Wayland
 compositor](https://isaacfreund.com/software/river/).
 
 JrWM is a dynamic tiling WM with a layout inspired by that of dwm.  The
@@ -19,6 +19,11 @@ JrWM supports:
 
 JrWM is intended to be low-dependency, easy to build, easy to read and modify,
 and to have a good degree of correctness.
+
+![Screenshot of JrWM](/doc/jrwm.png)
+
+_A screenshot of JrWM featuring waybar, foot,
+[es](https://github.com/wryun/es-shell) and zathura._
 
 
 ## Configuration
@@ -79,19 +84,22 @@ include:
 
 -   Better multi-space support: more spaces, better space/output assignment,
     dynamic/configurable spaces
--   Consider whether a tag-oriented setup can/should be supported as an
-    alternative to a space-oriented setup (spaces will still be important
-    internal data structures, just not necessarily user-affecting)
 -   Improve behavior around adding and removing outputs and windows (who gets
     focus?  Where do spaces get assigned?  How do we handle not enough, or too
     many, spaces?)
 -   Floating window support, and "dialog"/child windows as floating windows
+-   Documentation, probably via man page
+-   JrWM is untested, and so probably buggy, with multiple outputs or seats; we
+    should fix that
+
+Some possible further additions:
+
+-   Consider whether a tag-oriented setup can/should be supported as an
+    alternative to a space-oriented setup (spaces will still be important
+    internal data structures, just not necessarily user-affecting)
 -   Optional focus-follows-pointer and pointer-follows-focus behavior, since
     some people like that stuff
--   Optional extensions for input and output configuration, presuming they
-    enable better "frame perfection" and other behaviors than external tools do
+-   Optional extensions for input and output management, presuming they enable
+    better "frame perfection" and other behaviors than external tools do
 -   Actual configuration, probably via IPC or API, once the codebase has settled
     down
-
-JrWM is untested, and so might be buggy, with multiple Outputs or multiple
-Seats.
