@@ -22,7 +22,8 @@ and to have a good degree of correctness.
 
 ![Screenshot of JrWM](/doc/jrwm.png)
 
-_A screenshot of JrWM featuring waybar, foot,
+_A screenshot of JrWM featuring waybar, foot, vim,
+[notcat](https://github.com/jpco/notcat),
 [es](https://github.com/wryun/es-shell) and zathura._
 
 
