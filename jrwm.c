@@ -33,9 +33,6 @@ struct river_window_manager_v1 *window_manager_v1;
 struct river_xkb_bindings_v1 *xkb_bindings_v1;
 struct river_layer_shell_v1 *layer_shell_v1;
 
-// Command run on startup
-// To disable, set to { NULL }; to run more than one, use a shell script
-static char *on_startup[] = { "swaybg", "-c", "222222", NULL };
 
 // Listeners and event handlers for the core types
 
@@ -362,15 +359,6 @@ int main(void) {
 
 	wm_init();
 	river_window_manager_v1_add_listener(window_manager_v1, &wm_listener, NULL);
-
-	if (on_startup[0] != NULL) {
-		if (fork() == 0) {
-			setsid();
-			signal(SIGCHLD, SIG_DFL);
-			execvp((const char *)on_startup[0], (char *const *)on_startup);
-			exit(12);  // Just in case
-		}
-	}
 
 	while (true) {
 		if (wl_display_dispatch(display) < 0) {
