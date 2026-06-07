@@ -60,7 +60,8 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg);
 static void binding_move_next(struct Seat *seat, union Arg arg);
 static void binding_move_prev(struct Seat *seat, union Arg arg);
 static void binding_toggle_monocle(struct Seat *seat, union Arg arg);
-static void binding_switch_space(struct Seat *seat, union Arg arg);
+static void binding_view_space(struct Seat *seat, union Arg arg);
+static void binding_move_to_space(struct Seat *seat, union Arg arg);
 
 
 // TODO: De-personalize these so that they are actually useful for other people.
@@ -85,7 +86,26 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_j, binding_move_next, {}},
 	{super|shift, XKB_KEY_k, binding_move_prev, {}},
 	{super, XKB_KEY_m, binding_toggle_monocle, {}},
-	{super, XKB_KEY_s, binding_switch_space, {}},
+
+	{super, XKB_KEY_1, binding_view_space, {.i = 1}},
+	{super, XKB_KEY_2, binding_view_space, {.i = 2}},
+	{super, XKB_KEY_3, binding_view_space, {.i = 3}},
+	{super, XKB_KEY_4, binding_view_space, {.i = 4}},
+	{super, XKB_KEY_5, binding_view_space, {.i = 5}},
+	{super, XKB_KEY_6, binding_view_space, {.i = 6}},
+	{super, XKB_KEY_7, binding_view_space, {.i = 7}},
+	{super, XKB_KEY_8, binding_view_space, {.i = 8}},
+	{super, XKB_KEY_9, binding_view_space, {.i = 9}},
+
+	{super|shift, XKB_KEY_1, binding_move_to_space, {.i = 1}},
+	{super|shift, XKB_KEY_2, binding_move_to_space, {.i = 2}},
+	{super|shift, XKB_KEY_3, binding_move_to_space, {.i = 3}},
+	{super|shift, XKB_KEY_4, binding_move_to_space, {.i = 4}},
+	{super|shift, XKB_KEY_5, binding_move_to_space, {.i = 5}},
+	{super|shift, XKB_KEY_6, binding_move_to_space, {.i = 6}},
+	{super|shift, XKB_KEY_7, binding_move_to_space, {.i = 7}},
+	{super|shift, XKB_KEY_8, binding_move_to_space, {.i = 8}},
+	{super|shift, XKB_KEY_9, binding_move_to_space, {.i = 9}},
 
 	{super, XKB_KEY_Return, binding_spawn, {.v = spawn_foot}},
 	{super, XKB_KEY_space, binding_spawn, {.v = spawn_rofi}},
@@ -225,15 +245,32 @@ static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 		space->layout = tiled_layout;
 }
 
-static void binding_switch_space(struct Seat *seat, union Arg arg) {
-	struct Space *space = seat->focused, *s, *unfocused = NULL;
-	wl_list_for_each(s, &wm.spaces, link) {
-		if (s != space)
-			unfocused = s;
-	}
-	unfocused->output = seat->focused->output;
-	unfocused->output->active = unfocused;
-	seat->focused = unfocused;
+static void binding_view_space(struct Seat *seat, union Arg arg) {
+	int i = 0;
+	struct Space *s, *space = NULL;
+	wl_list_for_each(s, &wm.spaces, link)
+		if ((++i) == arg.i)
+			space = s;
+
+	space->output = seat->focused->output;
+	space->output->active = space;
+	seat->focused = space;
+}
+
+static void binding_move_to_space(struct Seat *seat, union Arg arg) {
+	struct Window *window = seat->focused->focused;
+	if (window == NULL)
+		return;
+
+	int i = 0;
+	struct Space *s, *space = NULL;
+	wl_list_for_each(s, &wm.spaces, link)
+		if ((++i) == arg.i)
+			space = s;
+
+	replace_window(window);  // Sensible?
+	window->space = space;
+	space->focused = window;
 }
 
 

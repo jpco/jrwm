@@ -62,8 +62,15 @@ Move the window "backward" in the current space.
 .B Mod4-m
 Toggle the current space's layout between monocle and tiled.
 .TP
-.B Mod4-s
-Swap between the two spaces on the current output.
+.B Mod4-(1 ... 9)
+Select the
+.IR n th
+space to view on the current output.
+.TP
+.B Mod4-Shift-(1 ... 9)
+Send the currently focused window to the
+.IR n th
+space.
 .SH CUSTOMIZATION
 JrWM has no dynamic customization mechanism and changes to the behavior
 described in this document must be made by editing its source.

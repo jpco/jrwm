@@ -52,37 +52,48 @@ static bool valid_rect(struct Rect r) {
 }
 
 
-// Handle creation/deletion of core objects
-// (focus Seats, associate Spaces with Outputs, place Windows in Spaces, etc.)
+// Handle creation/deletion of the core objects that all point to each other.
 //  - These run before the relevant wl_list in wm is updated
 //  - None of these run during a manage or render sequence
 
 // Find a Space for this Output to activate
+// FIXME: What if all Spaces already have an Output?
 extern void place_output(struct Output *output) {
 	struct Space *space;
+
+	// Send any Spaces with no Output here
 	wl_list_for_each(space, &wm.spaces, link)
 		if (space->output == NULL)
 			space->output = output;
 
+	// If we have a focused space, use that as our active one
 	struct Seat *seat;
 	wl_list_for_each(seat, &wm.seats, link)
 		if (output == seat->focused->output)
 			output->active = seat->focused;
 
-	// Fallback if necessary
-	if (output->active == NULL)
-		wl_list_for_each(space, &wm.spaces, link)
-			output->active = space;
+	// Otherwise, just pick the first Space with this Output
+	if (output->active == NULL) {
+		wl_list_for_each(space, &wm.spaces, link) {
+			if (output == space->output) {
+				output->active = space;
+				break;
+			}
+		}
+	}
 }
 
 // Replace this Output with another for any relevant Spaces
 extern void replace_output(struct Output *output) {
 	struct Output *replacement = NULL, *r;
+	struct Space *space;
+
+	// Pick a random other Output, if there are any.
 	wl_list_for_each(r, &wm.outputs, link)
 		if (r != output)
 			replacement = r;
 
-	struct Space *space;
+	// Assign that Output (or NULL, if no other Outputs exist) to any Spaces
 	wl_list_for_each(space, &wm.spaces, link)
 		if (space->output == output)
 			space->output = replacement;
@@ -92,16 +103,21 @@ extern void replace_output(struct Output *output) {
 extern void place_window(struct Window *window) {
 	struct Seat *seat;
 	struct Space *space;
+
+	// Use a random Seat's focused Space
+	// TODO: How to use a better Seat here?
 	wl_list_for_each(seat, &wm.seats, link) {
 		space = seat->focused;
 		window->space = space;
 		space->focused = window;
 	}
 
-	// Fallback if necessary
+	// Fallback: pick a random Space
 	if (window->space == NULL)
 		wl_list_for_each(space, &wm.spaces, link)
 			window->space = space;
+
+	// If the Space has no focused Window, focus this one
 	if (window->space->focused == NULL)
 		window->space->focused = window;
 }
@@ -113,6 +129,8 @@ extern void replace_window(struct Window *window) {
 		if (space->focused != window)
 			continue;
 		struct Window *r, *replacement = NULL;
+		// Find a random other Window to focus in the Space
+		// (or NULL, if no other Window exists)
 		wl_list_for_each(r, &wm.windows, link) {
 			if (r->space == space && r != window)
 				replacement = r;
@@ -124,15 +142,16 @@ extern void replace_window(struct Window *window) {
 // Find a Space for this Seat to focus on
 extern void place_seat(struct Seat *seat) {
 	struct Output *output;
+	struct Space *space;
+
+	// Pick a random Output's active Space
 	wl_list_for_each(output, &wm.outputs, link)
 		seat->focused = output->active;
 
-	// Fall back if we have no active Spaces to work with
-	if (seat->focused == NULL) {
-		struct Space *space;
+	// Fallback: Pick a random Space
+	if (seat->focused == NULL)
 		wl_list_for_each(space, &wm.spaces, link)
 			seat->focused = space;
-	}
 }
 
 

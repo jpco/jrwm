@@ -36,11 +36,15 @@ Configuration, such as it is, is done by editing the source:
 ## Building and installation
 
 To build, JrWM requires:
+
  - a C99-capable compiler
- - GNU make
+ - GNU or BSD make
  - the wayland-scanner utility (probably from your distribution's `wayland`
    package)
  - libxkbcommon, or your distribution's version
+
+Given Wayland and libxkbcommon are already dependencies for river, these are
+probably all already installed.
 
 Building is as simple as
 
@@ -82,9 +86,9 @@ habits:
 JrWM is still in active development.  Desired improvements and additions
 include:
 
--   Better multi-space support: more spaces, better space/output assignment,
+-   Better multi-space support: better space/output assignment,
     dynamic/configurable spaces
--   Improve behavior around adding and removing outputs/windows/seats/spaces
+-   Refine behavior around adding and removing outputs/windows/seats/spaces
     (who gets focus?  Where do spaces get assigned?  How do we handle not
     enough, or too many, spaces?)
 -   Floating window support, and "dialog"/child windows as floating windows

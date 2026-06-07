@@ -302,25 +302,22 @@ static void wm_init(void) {
 	wl_list_init(&wm.seats);
 	wl_list_init(&wm.spaces);
 
-	// Create our two "demo" spaces.
-	// TODO: move me out?
-	struct Space *space = calloc(1, sizeof(struct Space));
-	space->layout = tiled_layout;
-	wl_list_insert(&wm.spaces, &space->link);
-
-	space = calloc(1, sizeof(struct Space));
-	space->layout = tiled_layout;
-	wl_list_insert(&wm.spaces, &space->link);
+	// Create our spaces
+	// TODO: Move me out
+	int i;
+	for (i = 1; i <= 9; i++) {
+		struct Space *space = calloc(1, sizeof(struct Space));
+		space->layout = tiled_layout;
+		wl_list_insert(&wm.spaces, &space->link);
+	}
 }
 
 
 // Global gunk
 
 static void handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version) {
-	if (strcmp(interface, river_window_manager_v1_interface.name) == 0) {
-		if (version >= 4) {
-			window_manager_v1 = wl_registry_bind(registry, name, &river_window_manager_v1_interface, 4);
-		}
+	if (strcmp(interface, river_window_manager_v1_interface.name) == 0 && version >= 4) {
+		window_manager_v1 = wl_registry_bind(registry, name, &river_window_manager_v1_interface, 4);
 	} else if (strcmp(interface, river_xkb_bindings_v1_interface.name) == 0) {
 		xkb_bindings_v1 = wl_registry_bind(registry, name, &river_xkb_bindings_v1_interface, 1);
 	} else if (strcmp(interface, river_layer_shell_v1_interface.name) == 0) {
