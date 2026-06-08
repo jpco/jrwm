@@ -28,8 +28,7 @@
 			  ( hex        & 0xFF) * (UINT32_MAX / 255) }
 
 static uint32_t border_color[4] = COLOR(0x333333ff);
-// static uint32_t focused_color[4] = COLOR(0x77aa99ff);
-static uint32_t semi_focused_color[4] = COLOR(0x77aa99ff);  // = COLOR(0x555555ff);
+static uint32_t focused_color[4] = COLOR(0x77aa99ff);
 
 static int monocle_borderpx = 0;
 static int tiled_borderpx = 2;
@@ -291,17 +290,26 @@ extern void render_space(struct Space *space) {
 			continue;
 
 		int borderpx	= tiled_borderpx;
-		uint32_t *color	= border_color;
 		if (space->layout == monocle_layout)
 			borderpx = monocle_borderpx;
-		if (window == window->space->focused) {
-			river_node_v1_place_top(window->node);
-			color = semi_focused_color;
-		}
 		river_window_v1_show(window->obj);
 		river_window_v1_set_borders(window->obj, 15, borderpx,
-				color[0], color[1], color[2], color[3]);
+				border_color[0], border_color[1],
+				border_color[2], border_color[3]);
 		river_node_v1_set_position(window->node,
 				window->layout.x, window->layout.y);
 	}
+}
+
+extern void seat_render_focus(struct Seat *seat) {
+	struct Window *window = seat->focused->focused;
+	if (window == NULL || seat->ls_focused)
+		return;
+	river_node_v1_place_top(window->node);
+	int borderpx	= tiled_borderpx;
+	if (seat->focused->layout == monocle_layout)
+		borderpx = monocle_borderpx;
+	river_window_v1_set_borders(window->obj, 15, borderpx,
+			focused_color[0], focused_color[1],
+			focused_color[2], focused_color[3]);
 }

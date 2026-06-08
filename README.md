@@ -88,12 +88,9 @@ include:
 
 -   Better multi-space support: better space/output assignment,
     dynamic/configurable spaces
--   Refine behavior around adding and removing outputs/windows/seats/spaces
-    (who gets focus?  Where do spaces get assigned?  How do we handle not
-    enough, or too many, spaces?)
+-   Better, and tested, multi-output handling
+-   Multi-seat support
 -   Floating window support, and "dialog"/child windows as floating windows
--   JrWM is untested, and so probably buggy, with multiple outputs or seats; we
-    should fix that
 
 Some possible further additions:
 

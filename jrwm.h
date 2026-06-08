@@ -123,7 +123,7 @@ extern void seat_manage_focus(struct Seat *);
 
 // Called during the render sequence
 extern void render_space(struct Space *);
-// extern void seat_render_focus(struct Seat *);
+extern void seat_render_focus(struct Seat *);
 
 
 // bindings.c
