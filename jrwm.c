@@ -263,9 +263,9 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 	wl_list_for_each(space, &wm.spaces, link)
 		render_space(space);
 
-	struct Seat *seat;
-	wl_list_for_each(seat, &wm.seats, link)
-		seat_render_focus(seat);
+	// struct Seat *seat;
+	// wl_list_for_each(seat, &wm.seats, link)
+	// 	seat_render_focus(seat);
 
 	river_window_manager_v1_render_finish(window_manager_v1);
 }
