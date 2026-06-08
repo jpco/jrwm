@@ -79,11 +79,12 @@ extern void place_output(struct Output *output) {
 		}
 	}
 
-	// Fallback: just make a new space to use!  This may cause problems
+	// Fallback: make a new space to use!  This may cause problems
 	// with the "nth-space" bindings, but it's better than segfaults.
 	space = create_space();
 	output->active = space;
 	space->output = output;
+	wl_list_insert(&wm.spaces, &space->link);
 }
 
 // Replace this Output with another for any relevant Spaces

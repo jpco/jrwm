@@ -50,7 +50,6 @@ extern bool is_space_idle(struct Space *space) {
 extern struct Space *create_space(void) {
 	struct Space *space = calloc(1, sizeof(struct Space));
 	space->layout = tiled_layout;
-	wl_list_insert(&wm.spaces, &space->link);
 	return space;
 }
 
@@ -328,8 +327,10 @@ static void wm_init(void) {
 
 	// Create static spaces
 	int i;
-	for (i = 1; i <= 9; i++)
-		create_space();
+	for (i = 1; i <= 9; i++) {
+		struct Space *space = create_space();
+		wl_list_insert(&wm.spaces, &space->link);
+	}
 }
 
 
