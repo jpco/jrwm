@@ -14,8 +14,8 @@ time.  Supported layouts are a tiled layout like that of dwm and a monocle
 layout.
 
 JrWM supports very little in the way of visuals.  Window borders are drawn to
-indicate focus state, but for anything else, additional programs such as waybar
-must be used.  For the sake of these programs, JrWM supports the
+indicate focus, but for anything else, additional programs such as waybar must
+be used.  For the sake of these programs, JrWM supports the
 river-layer-shell-v1 protocol.
 
 ![Screenshot of JrWM](/doc/jrwm.png)
@@ -86,20 +86,18 @@ habits:
 JrWM is still in active development.  Desired improvements and additions
 include:
 
--   Better multi-space support: better space/output assignment,
-    dynamic/configurable spaces
--   Better, and tested, multi-output handling
--   Multi-seat support
 -   Floating window support, and "dialog"/child windows as floating windows
+-   Ability to add/remove spaces
+-   Multi-output support
+-   Multi-seat support
 
 Some possible further additions:
 
--   Consider whether a tag-oriented setup can/should be supported as an
-    alternative to a space-oriented setup (spaces will still be important
-    internal data structures, just not necessarily user-affecting)
+-   Better flexibility for layouts - e.g., binary space partitioning, tags,
+    scrolling
 -   Optional focus-follows-pointer and pointer-follows-focus behavior, since
     some people like that stuff
--   Optional extensions for input and output management, presuming they can do
-    it better than external tools (e.g., frame-perfect output scaling)
+-   Optional extensions for built-in input and output management, presuming they
+    can do it better than external tools (e.g., frame-perfect output scaling)
 -   Actual configuration, probably via IPC or API, once the codebase has settled
     down

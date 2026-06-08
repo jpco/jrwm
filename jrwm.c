@@ -297,6 +297,9 @@ static const struct river_window_manager_v1_listener wm_listener = {
 };
 
 static void wm_init(void) {
+	signal(SIGCHLD, SIG_IGN);
+	unsetenv("WAYLAND_DEBUG");
+
 	wl_list_init(&wm.outputs);
 	wl_list_init(&wm.windows);
 	wl_list_init(&wm.seats);
@@ -338,9 +341,6 @@ int main(void) {
 		fprintf(stderr, "failed to connect to Wayland server\n");
 		return 1;
 	}
-
-	// Ensure children are automatically reaped
-	signal(SIGCHLD, SIG_IGN);
 
 	struct wl_registry *registry = wl_display_get_registry(display);
 	wl_registry_add_listener(registry, &registry_listener, NULL);
