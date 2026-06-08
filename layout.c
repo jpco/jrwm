@@ -111,10 +111,13 @@ extern void place_window(struct Window *window) {
 		space->focused = window;
 	}
 
-	// Fallback: pick a random Space
-	if (window->space == NULL)
-		wl_list_for_each(space, &wm.spaces, link)
+	// Fallback: pick the first Space
+	if (window->space == NULL) {
+		wl_list_for_each(space, &wm.spaces, link) {
 			window->space = space;
+			break;
+		}
+	}
 
 	// If the Space has no focused Window, focus this one
 	if (window->space->focused == NULL)
