@@ -253,6 +253,8 @@ extern void manage_window_deferred(struct Window *window) {
 // manage sequence.
 // Called at the end of the sequence so that other functions can modify focus
 extern void manage_seat_focus(struct Seat *seat) {
+	if (seat->focused->output != NULL)
+		river_layer_shell_output_v1_set_default(seat->focused->output->ls);
 	if (seat->focused->focused != NULL)
 		river_seat_v1_focus_window(seat->obj, seat->focused->focused->obj);
 	else
