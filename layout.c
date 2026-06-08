@@ -79,7 +79,11 @@ extern void place_output(struct Output *output) {
 		}
 	}
 
-	// TODO: Fallback
+	// Fallback: just make a new space to use!  This may cause problems
+	// with the "nth-space" bindings, but it's better than segfaults.
+	space = create_space();
+	output->active = space;
+	space->output = output;
 }
 
 // Replace this Output with another for any relevant Spaces
@@ -143,16 +147,7 @@ extern void replace_window(struct Window *window) {
 
 // Find a Space for this Seat to focus on
 extern void place_seat(struct Seat *seat) {
-	struct Output *output;
 	struct Space *space;
-
-	// Focus the first Output's active Space
-	wl_list_for_each(output, &wm.outputs, link) {
-		seat->focused = output->active;
-		return;
-	}
-
-	// Fallback on no Outputs: Focus the first Space
 	wl_list_for_each(space, &wm.spaces, link) {
 		seat->focused = space;
 		break;
