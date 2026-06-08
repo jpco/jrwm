@@ -34,6 +34,20 @@ struct river_xkb_bindings_v1 *xkb_bindings_v1;
 struct river_layer_shell_v1 *layer_shell_v1;
 
 
+// Utility functions for the rest of the binary
+
+// An "idle" space has no windows and is not active on any Outputs
+// It is eligible to be yanked around between Outputs freely
+extern bool is_space_idle(struct Space *space) {
+	struct Window *w;
+	wl_list_for_each(w, &wm.windows, link)
+		if (w->space == space)
+			return false;
+
+	return (space->output == NULL || space->output->active != space);
+}
+
+
 // Listeners and event handlers for the core types
 
 static void output_handle_removed(void *data, struct river_output_v1 *obj) {

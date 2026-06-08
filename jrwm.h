@@ -48,7 +48,7 @@ struct Output {
 	struct river_output_v1 *obj;
 	struct river_layer_shell_output_v1 *ls;
 
-	struct Rect windowed;   // Non-exclusive area of the Output
+	struct Rect windowed;
 
 	struct Space *active;   // Non-null
 };
@@ -99,6 +99,8 @@ extern struct WindowManager wm;
 extern struct river_window_manager_v1 *window_manager_v1;
 extern struct river_xkb_bindings_v1 *xkb_bindings_v1;
 extern struct river_layer_shell_v1 *layer_shell_v1;
+
+extern bool is_space_idle(struct Space *);
 
 
 // layout.c

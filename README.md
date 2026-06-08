@@ -87,9 +87,9 @@ JrWM is still in active development.  Desired improvements and additions
 include:
 
 -   Floating window support, and "dialog"/child windows as floating windows
--   Ability to add/remove spaces
--   Multi-output support
+-   Better ability to add/remove spaces
 -   Multi-seat support
+-   Fix up bad `wl_list` handling
 
 Some possible further additions:
 

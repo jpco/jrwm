@@ -60,7 +60,7 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg);
 static void binding_move_next(struct Seat *seat, union Arg arg);
 static void binding_move_prev(struct Seat *seat, union Arg arg);
 static void binding_toggle_monocle(struct Seat *seat, union Arg arg);
-static void binding_view_space(struct Seat *seat, union Arg arg);
+static void binding_activate_space(struct Seat *seat, union Arg arg);
 static void binding_move_to_space(struct Seat *seat, union Arg arg);
 
 
@@ -87,15 +87,15 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_k, binding_move_prev, {}},
 	{super, XKB_KEY_m, binding_toggle_monocle, {}},
 
-	{super, XKB_KEY_1, binding_view_space, {.i = 1}},
-	{super, XKB_KEY_2, binding_view_space, {.i = 2}},
-	{super, XKB_KEY_3, binding_view_space, {.i = 3}},
-	{super, XKB_KEY_4, binding_view_space, {.i = 4}},
-	{super, XKB_KEY_5, binding_view_space, {.i = 5}},
-	{super, XKB_KEY_6, binding_view_space, {.i = 6}},
-	{super, XKB_KEY_7, binding_view_space, {.i = 7}},
-	{super, XKB_KEY_8, binding_view_space, {.i = 8}},
-	{super, XKB_KEY_9, binding_view_space, {.i = 9}},
+	{super, XKB_KEY_1, binding_activate_space, {.i = 1}},
+	{super, XKB_KEY_2, binding_activate_space, {.i = 2}},
+	{super, XKB_KEY_3, binding_activate_space, {.i = 3}},
+	{super, XKB_KEY_4, binding_activate_space, {.i = 4}},
+	{super, XKB_KEY_5, binding_activate_space, {.i = 5}},
+	{super, XKB_KEY_6, binding_activate_space, {.i = 6}},
+	{super, XKB_KEY_7, binding_activate_space, {.i = 7}},
+	{super, XKB_KEY_8, binding_activate_space, {.i = 8}},
+	{super, XKB_KEY_9, binding_activate_space, {.i = 9}},
 
 	{super|shift, XKB_KEY_1, binding_move_to_space, {.i = 1}},
 	{super|shift, XKB_KEY_2, binding_move_to_space, {.i = 2}},
@@ -143,6 +143,8 @@ static void binding_close(struct Seat *seat, union Arg arg) {
 		seat->focused->focused->close = true;
 }
 
+// Focus the next visible window
+// TODO: Multi-output
 static void binding_focus_next(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
@@ -166,6 +168,8 @@ static void binding_focus_next(struct Seat *seat, union Arg arg) {
 	space->focused = fw;
 }
 
+// Focus the previous visible window
+// TODO: Multi-output
 static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
@@ -189,6 +193,8 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	space->focused = fw;
 }
 
+// Move this window to where the next visible one is
+// TODO: Multi-output
 static void binding_move_next(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
@@ -212,6 +218,8 @@ static void binding_move_next(struct Seat *seat, union Arg arg) {
 		wl_list_insert(&wm.windows, &curr->link);
 }
 
+// Move this window to where the previous visible one is
+// TODO: Multi-output
 static void binding_move_prev(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
@@ -235,6 +243,7 @@ static void binding_move_prev(struct Seat *seat, union Arg arg) {
 		wl_list_insert(wm.windows.prev, &curr->link);
 }
 
+// Toggle the currently focused Space's layout between tiled and monocle
 static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->focused == NULL)
@@ -245,18 +254,24 @@ static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 		space->layout = tiled_layout;
 }
 
-static void binding_view_space(struct Seat *seat, union Arg arg) {
+// Activate and focus the nth Space
+static void binding_activate_space(struct Seat *seat, union Arg arg) {
 	int i = 0;
+
 	struct Space *s, *space = NULL;
 	wl_list_for_each(s, &wm.spaces, link)
 		if ((++i) == arg.i)
 			space = s;
 
-	space->output = seat->focused->output;
+	// If the Space is "idle", yank it here
+	if (is_space_idle(space))
+		space->output = seat->focused->output;
+
 	space->output->active = space;
 	seat->focused = space;
 }
 
+// Move the currently focused Window to the nth Space
 static void binding_move_to_space(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
 	if (window == NULL)

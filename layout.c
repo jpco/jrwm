@@ -56,30 +56,30 @@ static bool valid_rect(struct Rect r) {
 //  - None of these run during a manage or render sequence
 
 // Find a Space for this Output to activate
-// FIXME: What if all Spaces already have an Output?
 extern void place_output(struct Output *output) {
 	struct Space *space;
 
-	// Send any Spaces with no Output here
-	wl_list_for_each(space, &wm.spaces, link)
-		if (space->output == NULL)
-			space->output = output;
-
-	// If we have a focused space, use that as our active one
+	// If we have a focused, inactive Space, use that
 	struct Seat *seat;
-	wl_list_for_each(seat, &wm.seats, link)
-		if (output == seat->focused->output)
+	wl_list_for_each(seat, &wm.seats, link) {
+		space = seat->focused;
+		if (space->output == NULL || space->output->active != space) {
 			output->active = seat->focused;
-
-	// Otherwise, just pick the first Space with this Output
-	if (output->active == NULL) {
-		wl_list_for_each(space, &wm.spaces, link) {
-			if (output == space->output) {
-				output->active = space;
-				break;
-			}
+			seat->focused->output = output;
+			return;
 		}
 	}
+
+	// Otherwise, just pick the first inactive Space
+	wl_list_for_each(space, &wm.spaces, link) {
+		if (space->output == NULL || space->output->active != space) {
+			output->active = space;
+			space->output = output;
+			return;
+		}
+	}
+
+	// TODO: Fallback
 }
 
 // Replace this Output with another for any relevant Spaces
@@ -104,7 +104,7 @@ extern void place_window(struct Window *window) {
 	struct Space *space;
 
 	// Use a random Seat's focused Space
-	// TODO: How to use a better Seat here?
+	// TODO: How to pick the right Seat here?
 	wl_list_for_each(seat, &wm.seats, link) {
 		space = seat->focused;
 		window->space = space;
@@ -146,14 +146,17 @@ extern void place_seat(struct Seat *seat) {
 	struct Output *output;
 	struct Space *space;
 
-	// Pick a random Output's active Space
-	wl_list_for_each(output, &wm.outputs, link)
+	// Focus the first Output's active Space
+	wl_list_for_each(output, &wm.outputs, link) {
 		seat->focused = output->active;
+		return;
+	}
 
-	// Fallback: Pick a random Space
-	if (seat->focused == NULL)
-		wl_list_for_each(space, &wm.spaces, link)
-			seat->focused = space;
+	// Fallback on no Outputs: Focus the first Space
+	wl_list_for_each(space, &wm.spaces, link) {
+		seat->focused = space;
+		break;
+	}
 }
 
 
