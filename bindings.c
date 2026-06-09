@@ -160,51 +160,29 @@ static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 // Focus the next visible window
 // TODO: Multi-output
 static void binding_focus_next(struct Seat *seat, union Arg arg) {
-	struct Space *space = seat->focused;
-	if (space->focused == NULL)
+	struct Window *w;
+	if (seat->focused->focused == NULL)
 		return;
-	bool next = false, first = true;
-	struct Window *w = NULL, *fw = NULL;
-	wl_list_for_each(w, &wm.windows, link) {
-		if (w->space != space)
-			continue;
-		if (first) {
-			fw = w;
-			first = false;
-		}
-		if (next) {
-			space->focused = w;
+	wl_list_for_each(w, &seat->focused->focused->link, link) {
+		if (w->space == seat->focused) {
+			seat->focused->focused = w;
 			return;
 		}
-		if (w == space->focused)
-			next = true;
 	}
-	space->focused = fw;
 }
 
 // Focus the previous visible window
 // TODO: Multi-output
 static void binding_focus_prev(struct Seat *seat, union Arg arg) {
-	struct Space *space = seat->focused;
-	if (space->focused == NULL)
+	struct Window *w;
+	if (seat->focused->focused == NULL)
 		return;
-	bool next = false, first = true;
-	struct Window *w = NULL, *fw = NULL;
-	wl_list_for_each_reverse(w, &wm.windows, link) {
-		if (w->space != space)
-			continue;
-		if (first) {
-			fw = w;
-			first = false;
-		}
-		if (next) {
-			space->focused = w;
+	wl_list_for_each_reverse(w, &seat->focused->focused->link, link) {
+		if (w->space == seat->focused) {
+			seat->focused->focused = w;
 			return;
 		}
-		if (w == space->focused)
-			next = true;
 	}
-	space->focused = fw;
 }
 
 // Move this window to where the next visible one is
