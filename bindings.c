@@ -239,7 +239,7 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 		return;
 
 	// If the Space is "idle", yank it here
-	if (space->output == NULL || is_space_idle(space))
+	if (space->output == NULL || idle_space(space))
 		space->output = seat->focused->output;
 	space->output->active = space;
 	seat->focused = space;

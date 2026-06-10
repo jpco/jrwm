@@ -30,7 +30,7 @@ Configuration, such as it is, is done by editing the source:
 
 -   `bindings.c` contains key bindings
 -   `layout.c` contains window decoration and layout
--   `jrwm.c` interacts with Wayland
+-   `jrwm.c` contains Wayland event handling
 
 
 ## Building and installation
@@ -66,12 +66,14 @@ The Makefile, like JrWM itself, is intended to be simple and easy to modify.
 
 ## Code style guidelines
 
-These reminders are listed here primarily to remind myself to avoid my own bad
-habits:
+These reminders are listed here primarily to remind myself to stay consistent
+and avoid my own bad habits:
 
 -   Functions should either be "real", pure functions, or should be
     state-modifying procedures; don't return a value from a function that
     modifies state or makes calls to River/Wayland.
+-   Predicate functions should be named `condition_object`, like `idle_space`,
+    rather than something like `is_space_idle` or `space_idle_p`.
 -   Loops and conditionals should always have braces, unless they contain only
     other conditionals without braces or a single statement with no comment (and
     even then, braces are okay).  An if statement should have braces on all its
@@ -86,17 +88,17 @@ habits:
 JrWM is still in active development.  Desired improvements and additions
 include:
 
--   Floating window support, and "dialog"/child windows as floating windows
--   Better ability to add/remove spaces
--   Better support for moving around spaces and windows on multiple outputs
--   Multi-seat support (in particular, something with `xdg_activation_v1` to
-    properly associate a window with the seat that created it)
--   Merge current Spaces with river-workspace-v1 when that becomes available
+-   Floating window support and "dialog"/child windows as floating windows
+-   Multi-seat support: an `xdg-activation-v1` based way to associate new
+    windows with seats when available, and refactor focus to support multiple
+    focused windows on one space
+-   Integrate `river-workspace-v1` into spaces when available
 
 Some possible further additions:
 
--   Better flexibility for layouts - e.g., binary space partitioning, tags,
-    scrolling
+-   Flexibility for layouts - e.g., binary space partitioning, tags, scrolling
+-   Flexibility in other behaviors, like focus changes on object creation and
+    deletion, dynamic spaces, etc.
 -   Optional focus-follows-pointer and pointer-follows-focus behavior, since
     some people like that stuff
 -   Optional extensions for built-in input and output management, presuming they

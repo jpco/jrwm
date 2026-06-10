@@ -41,7 +41,7 @@ static int static_spaces = 9;
 // Utility functions for the rest of the binary
 
 // An "idle" space has no windows and is not active on any Outputs
-extern bool is_space_idle(struct Space *space) {
+extern bool idle_space(struct Space *space) {
 	struct Window *w;
 	wl_list_for_each(w, &wm.windows, link)
 		if (w->space == space)

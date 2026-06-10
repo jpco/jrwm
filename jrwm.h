@@ -17,8 +17,6 @@
 #ifndef JRWM_H
 #define JRWM_H
 
-#include <stdbool.h>
-
 #include <river-layer-shell-v1.h>
 #include <river-window-management-v1.h>
 #include <river-xkb-bindings-v1.h>
@@ -100,7 +98,7 @@ extern struct river_window_manager_v1 *window_manager_v1;
 extern struct river_xkb_bindings_v1 *xkb_bindings_v1;
 extern struct river_layer_shell_v1 *layer_shell_v1;
 
-extern bool is_space_idle(struct Space *);
+extern bool idle_space(struct Space *);
 extern struct Space *create_space(void);
 
 
