@@ -88,13 +88,13 @@ static char *spawn_brightness_down[]	= {"mediactl", "brightnessctl", "-e", "set"
 #define none	RIVER_SEAT_V1_MODIFIERS_NONE
 
 struct Binddef binds[] = {
-	{super, XKB_KEY_q, binding_close, {}},
-	{super|shift, XKB_KEY_e, binding_exit, {}},
-	{super, XKB_KEY_j, binding_focus_next, {}},
-	{super, XKB_KEY_k, binding_focus_prev, {}},
-	{super|shift, XKB_KEY_j, binding_move_next, {}},
-	{super|shift, XKB_KEY_k, binding_move_prev, {}},
-	{super, XKB_KEY_m, binding_toggle_monocle, {}},
+	{super, XKB_KEY_q, binding_close, {0}},
+	{super|shift, XKB_KEY_e, binding_exit, {0}},
+	{super, XKB_KEY_j, binding_focus_next, {0}},
+	{super, XKB_KEY_k, binding_focus_prev, {0}},
+	{super|shift, XKB_KEY_j, binding_move_next, {0}},
+	{super|shift, XKB_KEY_k, binding_move_prev, {0}},
+	{super, XKB_KEY_m, binding_toggle_monocle, {0}},
 
 	{super, XKB_KEY_1, binding_activate_space, {.i = 1}},
 	{super, XKB_KEY_2, binding_activate_space, {.i = 2}},
@@ -123,7 +123,7 @@ struct Binddef binds[] = {
 	{none, XKB_KEY_XF86AudioLowerVolume, binding_spawn, {.v = spawn_volume_down}},
 	{none, XKB_KEY_XF86MonBrightnessUp, binding_spawn, {.v = spawn_brightness_up}},
 	{none, XKB_KEY_XF86MonBrightnessDown, binding_spawn, {.v = spawn_brightness_down}},
-	{0, 0, NULL, {}}
+	{0, 0, NULL, {0}}
 };
 
 #undef super
@@ -308,6 +308,7 @@ extern void manage_xkb_bindings(struct Seat *seat) {
 			river_xkb_binding_v1_disable(binding->obj);
 			break;
 		case BINDING_MANAGE_NONE:
+			break;
 		}
 		binding->manage = BINDING_MANAGE_NONE;
 	}

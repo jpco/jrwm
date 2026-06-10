@@ -17,6 +17,8 @@
 #ifndef JRWM_H
 #define JRWM_H
 
+#include <stdbool.h>
+
 #include <river-layer-shell-v1.h>
 #include <river-window-management-v1.h>
 #include <river-xkb-bindings-v1.h>
