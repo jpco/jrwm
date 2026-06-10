@@ -125,6 +125,44 @@ struct Binddef binds[] = {
 #undef none
 
 
+// Utility functions for bindings
+
+static struct Window *next_window(struct Window *window, struct wl_list *list) {
+	if (window == NULL)
+		return NULL;
+	if (list == NULL)
+		list = &window->link;
+
+	struct Window *w;
+	wl_list_for_each(w, list, link)
+		if (w->space == window->space)
+			return w;
+	return NULL;
+}
+
+static struct Window *prev_window(struct Window *window, struct wl_list *list) {
+	if (window == NULL)
+		return NULL;
+	if (list == NULL)
+		list = &window->link;
+
+	struct Window *w;
+	wl_list_for_each_reverse(w, list, link)
+		if (w->space == window->space)
+			return w;
+	return NULL;
+}
+
+static struct Space *nth_space(int n) {
+	int i = 0;
+	struct Space *space;
+	wl_list_for_each(space, &wm.spaces, link)
+		if ((++i) == n)
+			return space;
+	return NULL;
+}
+
+
 // Binding function definitions
 // None of these functions run during a manage or render sequence
 
@@ -146,103 +184,63 @@ static void binding_close(struct Seat *seat, union Arg arg) {
 		seat->focused->focused->close = true;
 }
 
-// Toggle the currently focused Space's layout between tiled and monocle
 static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
-	if (space->focused == NULL)
-		return;
 	if (space->layout == tiled_layout)
 		space->layout = monocle_layout;
 	else
 		space->layout = tiled_layout;
 }
 
-// Focus the next visible window
-// TODO: Multi-output
 static void binding_focus_next(struct Seat *seat, union Arg arg) {
-	struct Window *w;
-	if (seat->focused->focused == NULL)
-		return;
-	wl_list_for_each(w, &seat->focused->focused->link, link) {
-		if (w->space == seat->focused) {
-			seat->focused->focused = w;
-			return;
-		}
-	}
+	struct Window *window = next_window(seat->focused->focused, NULL);
+	if (window != NULL)
+		seat->focused->focused = window;
 }
 
-// Focus the previous visible window
-// TODO: Multi-output
 static void binding_focus_prev(struct Seat *seat, union Arg arg) {
-	struct Window *w;
-	if (seat->focused->focused == NULL)
-		return;
-	wl_list_for_each_reverse(w, &seat->focused->focused->link, link) {
-		if (w->space == seat->focused) {
-			seat->focused->focused = w;
-			return;
-		}
-	}
+	struct Window *window = prev_window(seat->focused->focused, NULL);
+	if (window != NULL)
+		seat->focused->focused = window;
 }
 
-// Move this window to where the next visible one is
-// TODO: Multi-output
 static void binding_move_next(struct Seat *seat, union Arg arg) {
-	struct Window *w, *target = NULL, *curr = seat->focused->focused;
-	if (curr == NULL)
+	struct Window *window = seat->focused->focused;
+	struct Window *target = next_window(window, NULL);
+	if (window == NULL || target == NULL)
 		return;
 
-	bool first = (&curr->link == wm.windows.next);
-	wl_list_for_each(w, &curr->link, link) {
-		if (w->space == curr->space) {
-			target = w;
-			break;
-		}
-	}
-	wl_list_remove(&curr->link);
-	if (target == NULL || (!first && &target->link == wm.windows.next))
-		wl_list_insert(&wm.windows, &curr->link);
+	bool to_first = (target == next_window(window, &wm.windows));
+	wl_list_remove(&window->link);
+	if (to_first)
+		wl_list_insert(&wm.windows, &window->link);
 	else
-		wl_list_insert(&target->link, &curr->link);
+		wl_list_insert(&target->link, &window->link);
 }
 
-// Move this window to where the previous visible one is
-// TODO: Multi-output
 static void binding_move_prev(struct Seat *seat, union Arg arg) {
-	struct Window *w, *target = NULL, *curr = seat->focused->focused;
-	if (curr == NULL)
+	struct Window *window = seat->focused->focused;
+	struct Window *target = prev_window(window, NULL);
+	if (window == NULL || target == NULL)
 		return;
 
-	bool last = (&curr->link == wm.windows.prev);
-	wl_list_for_each_reverse(w, &curr->link, link) {
-		if (w->space == curr->space) {
-			target = w;
-			break;
-		}
-	}
-	wl_list_remove(&curr->link);
-	if (target == NULL || (!last && &target->link == wm.windows.prev))
-		wl_list_insert(wm.windows.prev, &curr->link);
+	bool to_last = (target == prev_window(window, &wm.windows));
+	wl_list_remove(&window->link);
+	if (to_last)
+		wl_list_insert(wm.windows.prev, &window->link);
 	else
-		wl_list_insert(target->link.prev, &curr->link);
+		wl_list_insert(target->link.prev, &window->link);
 }
 
 // Activate and focus the nth Space
 static void binding_activate_space(struct Seat *seat, union Arg arg) {
-	int i = 0;
-
-	struct Space *s, *space = NULL;
-	wl_list_for_each(s, &wm.spaces, link)
-		if ((++i) == arg.i)
-			space = s;
-
+	struct Space *space = nth_space(arg.i);
 	if (space == NULL)
 		return;
 
 	// If the Space is "idle", yank it here
 	if (space->output == NULL || is_space_idle(space))
 		space->output = seat->focused->output;
-
 	space->output->active = space;
 	seat->focused = space;
 }
@@ -250,16 +248,8 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 // Move the currently focused Window to the nth Space
 static void binding_move_to_space(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
-	if (window == NULL)
-		return;
-
-	int i = 0;
-	struct Space *s, *space = NULL;
-	wl_list_for_each(s, &wm.spaces, link)
-		if ((++i) == arg.i)
-			space = s;
-
-	if (space == NULL)
+	struct Space *space = nth_space(arg.i);
+	if (window == NULL || space == NULL)
 		return;
 
 	replace_window(window);  // Sensible?

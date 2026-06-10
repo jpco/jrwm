@@ -91,7 +91,6 @@ include:
 -   Better support for moving around spaces and windows on multiple outputs
 -   Multi-seat support (in particular, something with `xdg_activation_v1` to
     properly associate a window with the seat that created it)
--   Fix up weak `wl_list` handling
 -   Merge current Spaces with river-workspace-v1 when that becomes available
 
 Some possible further additions:

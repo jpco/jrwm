@@ -103,6 +103,7 @@ extern struct river_layer_shell_v1 *layer_shell_v1;
 extern bool is_space_idle(struct Space *);
 extern struct Space *create_space(void);
 
+
 // layout.c
 
 // Layout functions
