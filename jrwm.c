@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #include "jrwm.h"
 
@@ -365,8 +366,16 @@ static const struct river_window_manager_v1_listener wm_listener = {
 };
 
 static void wm_init(void) {
-	signal(SIGCHLD, SIG_IGN);
 	unsetenv("WAYLAND_DEBUG");
+	struct sigaction sa;
+
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART;
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGCHLD, &sa, NULL);
+
+	// Trick from dwm: clean up any inherited zombie children
+	while (waitpid(-1, NULL, WNOHANG) > 0);
 
 	wl_list_init(&wm.outputs);
 	wl_list_init(&wm.windows);

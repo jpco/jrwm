@@ -173,9 +173,15 @@ static struct Space *nth_space(int n) {
 // None of these functions run during a manage or render sequence
 
 static void binding_spawn(struct Seat *seat, union Arg arg) {
+	struct sigaction sa;
 	if (fork() == 0) {
 		setsid();
-		signal(SIGCHLD, SIG_DFL);
+
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		sa.sa_handler = SIG_DFL;
+		sigaction(SIGCHLD, &sa, NULL);
+
 		execvp((const char *)arg.v[0], (char *const *)arg.v);
 		exit(12);  // Just in case
 	}
