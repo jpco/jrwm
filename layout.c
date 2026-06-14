@@ -139,6 +139,12 @@ extern void place_window(struct Window *window) {
 
 // Replace this Window with any other where necessary
 extern void replace_window(struct Window *window) {
+	struct Seat *seat;
+	// Unclear if this is even possible, but let's play it safe
+	wl_list_for_each(seat, &wm.seats, link)
+		if (seat->entered == window)
+			seat->entered = NULL;
+
 	if (window->space->focused != window)
 		return;
 	struct Window *r, *replacement = NULL;
