@@ -336,6 +336,7 @@ static void wm_handle_finished(void *data, struct river_window_manager_v1 *obj) 
 }
 
 static void wm_handle_unavailable(void *data, struct river_window_manager_v1 *obj) {
+	fprintf(stderr, "window management unavailable (is a WM already running?)\n");
 	// river_window_manager_v1_destroy(obj); ?
 	exit(1);
 }
