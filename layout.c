@@ -30,17 +30,19 @@
 static uint32_t border_color[4] = COLOR(0x333333ff);
 static uint32_t focused_color[4] = COLOR(0x77aa99ff);
 
-static int monocle_borderpx = 0;
-static int tiled_borderpx = 2;
-static float tiled_splitratio = 0.52;
+static int monocle_borderpx	=  0;
+
+static int tiled_borderpx	=  2;
+static int tiled_margin		= -2;	// Space between windows
+static int tiled_output_padding	=  0;	// Space around windows
+static float tiled_splitratio	=  0.52;
 
 static bool pointer_follows_focus = true;
 
 
 // Private functions for window management and rendering
 
-// Return the Output on which this Space is active, or NULL if it is not active
-// on any Output.
+// Return the Output on which this Space is active, or NULL if none
 static struct Output *active_on_output(struct Space *space) {
 	struct Output *output = NULL;
 	if (space->output != NULL && space->output->active == space)
@@ -50,6 +52,19 @@ static struct Output *active_on_output(struct Space *space) {
 
 static bool valid_rect(struct Rect r) {
 	return r.width >= 0 && r.height >= 0;
+}
+
+// In-place shrink the boundaries of a Rect to accommodate the given border radius
+static void subtract_border(struct Rect *rect, int32_t border) {
+	rect->x = rect->x + border;
+	rect->y = rect->y + border;
+	rect->width  = (rect->width  - border * 2 < 0) ? 0 : rect->width  - border * 2;
+	rect->height = (rect->height - border * 2 < 0) ? 0 : rect->height - border * 2;
+}
+
+static void render_border(struct Window *window, int thickness, uint32_t *color) {
+	river_window_v1_set_borders(window->obj, 15, thickness,
+			color[0], color[1], color[2], color[3]);
 }
 
 
@@ -160,14 +175,13 @@ extern void monocle_layout(struct Space *space, struct Rect bounds) {
 			river_window_v1_inform_maximized(window->obj);
 			window->maximized = true;
 		}
-		window->layout.x = bounds.x + monocle_borderpx;
-		window->layout.y = bounds.y + monocle_borderpx;
-		window->layout.width = bounds.width - monocle_borderpx * 2;
-		window->layout.height = bounds.height - monocle_borderpx * 2;
+		subtract_border(&bounds, monocle_borderpx);
+		window->layout = bounds;
 	}
 }
 
 extern void tiled_layout(struct Space *space, struct Rect bounds) {
+	subtract_border(&bounds, tiled_output_padding);
 	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
@@ -183,22 +197,21 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 		}
 		if (count == 1 || w == 0) {
 			// Left side "main" window
-			float split = (count == 1 ? 1.0 : tiled_splitratio);
-			window->layout.x = bounds.x + tiled_borderpx;
-			window->layout.y = bounds.y + tiled_borderpx;
-			window->layout.width = bounds.width * split - tiled_borderpx * 2;
-			window->layout.height = bounds.height - tiled_borderpx * 2;
+			window->layout = bounds;
+			if (count > 1)
+				window->layout.width *= tiled_splitratio;
 
-			rightwidth -= window->layout.width + tiled_borderpx;
+			rightwidth -= window->layout.width + tiled_margin;
 		} else {
 			// Right side "stacked" windows
-			window->layout.x = bounds.x + bounds.width - rightwidth + tiled_borderpx;
-			window->layout.y = bounds.y + bounds.height - rightheight + tiled_borderpx;
-			window->layout.width = rightwidth - tiled_borderpx * 2;
-			window->layout.height = rightheight / (count - w) - tiled_borderpx * 2;
+			window->layout.x = bounds.x + bounds.width - rightwidth;
+			window->layout.y = bounds.y + bounds.height - rightheight;
+			window->layout.width = rightwidth;
+			window->layout.height = rightheight / (count - w);
 
-			rightheight -= window->layout.height + tiled_borderpx;
+			rightheight -= window->layout.height + tiled_margin;
 		}
+		subtract_border(&window->layout, tiled_borderpx);
 		w++;
 	}
 }
@@ -299,16 +312,13 @@ extern void render_space(struct Space *space) {
 	wl_list_for_each(window, &wm.windows, link) {
 		if (window->space != space || !valid_rect(window->layout))
 			continue;
-
-		int borderpx	= tiled_borderpx;
-		if (space->layout == monocle_layout)
-			borderpx = monocle_borderpx;
 		river_window_v1_show(window->obj);
-		river_window_v1_set_borders(window->obj, 15, borderpx,
-				border_color[0], border_color[1],
-				border_color[2], border_color[3]);
 		river_node_v1_set_position(window->node,
 				window->layout.x, window->layout.y);
+		if (space->layout == monocle_layout)
+			render_border(window, monocle_borderpx, border_color);
+		else
+			render_border(window, tiled_borderpx, border_color);
 	}
 }
 
@@ -317,10 +327,8 @@ extern void render_seat_focus(struct Seat *seat) {
 	if (window == NULL || seat->ls_focused)
 		return;
 	river_node_v1_place_top(window->node);
-	int borderpx	= tiled_borderpx;
 	if (seat->focused->layout == monocle_layout)
-		borderpx = monocle_borderpx;
-	river_window_v1_set_borders(window->obj, 15, borderpx,
-			focused_color[0], focused_color[1],
-			focused_color[2], focused_color[3]);
+		render_border(window, monocle_borderpx, focused_color);
+	else
+		render_border(window, tiled_borderpx, focused_color);
 }

@@ -16,7 +16,7 @@ layout.
 JrWM supports very little in the way of visuals.  Window borders are drawn to
 indicate focus, but for anything else, additional programs such as waybar must
 be used.  For the sake of these programs, JrWM supports the
-river-layer-shell-v1 protocol.
+`river-layer-shell-v1` protocol.
 
 ![Screenshot of JrWM](/doc/jrwm.png)
 
@@ -93,6 +93,9 @@ include:
     windows with seats when available, and refactor focus to support multiple
     focused windows on one space
 -   Integrate `river-workspace-v1` into spaces when available
+-   Better behavioral consistency with other WMs and peoples' expectations.
+    Unfortunately, this will have to happen via feedback from others (github
+    issues and other feedback welcome!)
 
 Some possible further additions:
 
