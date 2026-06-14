@@ -197,18 +197,17 @@ static void seat_handle_window_interaction(void *data, struct river_seat_v1 *obj
 }
 
 static void seat_handle_pointer_enter(void *data, struct river_seat_v1 *obj, struct river_window_v1 *river_window) {
-	if (!focus_follows_pointer)
-		return;
 	struct Seat *seat = data;
-	struct Window *window = river_window_v1_get_user_data(river_window);
-	seat->focused = window->space;
-	window->space->focused = window;
+	if (focus_follows_pointer)
+		seat->entered = river_window_v1_get_user_data(river_window);
 }
 
 static void seat_handle_pointer_position(void *data, struct river_seat_v1 *obj, int32_t x, int32_t y) {
 	if (!focus_follows_pointer)
 		return;
 	struct Seat *seat = data;
+	seat->moved = true;
+
 	struct Output *o, *output = NULL;
 	wl_list_for_each(o, &wm.outputs, link) {
 		if (o->real.x <= x && o->real.x + o->real.width > x &&

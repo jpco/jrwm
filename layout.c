@@ -241,6 +241,13 @@ extern void manage_window_deferred(struct Window *window) {
 // manage sequence.
 // Called at the end of the sequence so that other functions can modify focus
 extern void manage_seat_focus(struct Seat *seat) {
+	// Change focus, if necessary
+	if (seat->moved && seat->entered != NULL) {
+		seat->focused = seat->entered->space;
+		seat->focused->focused = seat->entered;
+	}
+
+	// Propagate focus information to River
 	if (seat->focused->output != NULL)
 		river_layer_shell_output_v1_set_default(seat->focused->output->ls);
 	if (seat->focused->focused != NULL)
@@ -256,8 +263,10 @@ extern void manage_seat_focus(struct Seat *seat) {
 			int32_t y = window->layout.y + window->layout.height/2;
 			river_seat_v1_pointer_warp(seat->obj, x, y);
 		}
-		seat->warp = false;
 	}
+	seat->warp = false;
+	seat->moved = false;
+	seat->entered = NULL;
 }
 
 // Perform the main, per-Space, manage sequence logic

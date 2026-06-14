@@ -81,6 +81,8 @@ struct Seat {
 	struct wl_list xkb_bindings;  // XkbBinding
 
 	bool warp;              // Warp pointer to focused window
+	bool moved;             // The pointer has moved since last manage
+	struct Window *entered; // This window has been entered
 
 	bool ls_focused;        // Layer shell surface has focus
 	struct Space *focused;  // Non-null
