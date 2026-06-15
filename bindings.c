@@ -256,8 +256,8 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 	if (space == NULL)
 		return;
 
-	// If the Space is "idle", yank it here
-	if (space->output == NULL || idle_space(space))
+	// If the Space isn't already active on any Output, yank it here
+	if (active_on_output(space) == NULL)
 		space->output = seat->focused->output;
 	space->output->active = space;
 	seat->focused = space;

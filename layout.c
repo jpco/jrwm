@@ -42,14 +42,6 @@ static bool pointer_follows_focus = true;
 
 // Private functions for window management and rendering
 
-// Return the Output on which this Space is active, or NULL if none
-static struct Output *active_on_output(struct Space *space) {
-	struct Output *output = NULL;
-	if (space->output != NULL && space->output->active == space)
-		output = space->output;
-	return output;
-}
-
 static bool valid_rect(struct Rect r) {
 	return r.width >= 0 && r.height >= 0;
 }

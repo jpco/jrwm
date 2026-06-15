@@ -54,11 +54,18 @@ extern bool idle_space(struct Space *space) {
 	return (space->output == NULL || space->output->active != space);
 }
 
+extern struct Output *active_on_output(struct Space *space) {
+	if (space->output != NULL && space->output->active == space)
+		return space->output;
+	return NULL;
+}
+
 extern struct Space *create_space(void) {
 	struct Space *space = calloc(1, sizeof(struct Space));
 	space->layout = tiled_layout;
 	return space;
 }
+
 
 
 // Listeners and event handlers for the core types
