@@ -34,9 +34,9 @@ struct river_window_manager_v1 *window_manager_v1;
 struct river_xkb_bindings_v1 *xkb_bindings_v1;
 struct river_layer_shell_v1 *layer_shell_v1;
 
-// How many Spaces are allocated on startup.  At least one will be created
-// irrespective of this value.  If Outputs need more Spaces than this, they will
-// be created "on demand".
+// How many static Spaces are allocated on startup.  This does not limit the
+// total number of spaces, which will always be at least 1, but static spaces
+// are never "collected", while additional spaces may be
 static int static_spaces = 9;
 
 static bool focus_follows_pointer = true;
@@ -66,6 +66,26 @@ extern struct Space *create_space(void) {
 	return space;
 }
 
+// Remove a space, if it is idle, not static, and unfocused (or focus can be
+// reassigned)
+extern void collect_space(struct Space *space) {
+	if (space->is_static || idle_space(space))
+		return;
+
+	struct Space *r, *replacement = NULL;
+	wl_list_for_each(r, &wm.spaces, link)
+		if (r != space)
+			replacement = r;
+	if (replacement == NULL)
+		return;
+
+	struct Seat *seat;
+	wl_list_for_each(seat, &wm.seats, link)
+		if (seat->focused == space)
+			seat->focused = replacement;
+
+	wl_list_remove(&space->link);
+}
 
 
 // Listeners and event handlers for the core types
@@ -393,6 +413,7 @@ static void wm_init(void) {
 	int i, sp = (static_spaces < 1 ? 1 : static_spaces);
 	for (i = 0; i < sp; i++) {
 		struct Space *space = create_space();
+		space->is_static = (i < static_spaces);
 		wl_list_insert(&wm.spaces, &space->link);
 	}
 }

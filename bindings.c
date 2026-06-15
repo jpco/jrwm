@@ -259,7 +259,11 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 	// If the Space isn't already active on any Output, yank it here
 	if (active_on_output(space) == NULL)
 		space->output = seat->focused->output;
-	space->output->active = space;
+
+	if (space->output->active != space) {
+		collect_space(space->output->active);
+		space->output->active = space;
+	}
 	seat->focused = space;
 }
 

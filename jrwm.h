@@ -39,6 +39,8 @@ struct Space {
 	struct Output *output;  // May be null
 	struct Window *focused; // May be null
 
+	bool is_static;         // Static spaces are never removed
+
 	void (*layout)(struct Space *space, struct Rect bounds);
 };
 
@@ -107,6 +109,7 @@ extern struct river_layer_shell_v1 *layer_shell_v1;
 extern bool idle_space(struct Space *);
 extern struct Output *active_on_output(struct Space *);
 extern struct Space *create_space(void);
+extern void collect_space(struct Space *);
 
 
 // layout.c
