@@ -261,8 +261,9 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 		space->output = seat->focused->output;
 
 	if (space->output->active != space) {
-		collect_space(space->output->active);
+		struct Space *tmp;
 		space->output->active = space;
+		collect_space(tmp);
 	}
 	seat->focused = space;
 }

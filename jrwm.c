@@ -69,7 +69,7 @@ extern struct Space *create_space(void) {
 // Remove a space, if it is idle, not static, and unfocused (or focus can be
 // reassigned)
 extern void collect_space(struct Space *space) {
-	if (space->is_static || idle_space(space))
+	if (space->is_static || !idle_space(space))
 		return;
 
 	struct Space *r, *replacement = NULL;
@@ -85,6 +85,7 @@ extern void collect_space(struct Space *space) {
 			seat->focused = replacement;
 
 	wl_list_remove(&space->link);
+	free(space);
 }
 
 
