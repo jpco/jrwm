@@ -37,7 +37,7 @@ static int tiled_margin		= -2;	// Space between windows
 static int tiled_output_padding	=  0;	// Space around windows
 static float tiled_splitratio	=  0.52;
 
-static bool pointer_follows_focus = true;
+static bool pointer_follows_focus = false;
 
 
 // Private functions for window management and rendering
