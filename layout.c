@@ -59,6 +59,12 @@ static void render_border(struct Window *window, int thickness, uint32_t *color)
 			color[0], color[1], color[2], color[3]);
 }
 
+static void unfullscreen_window(struct Window *window) {
+	river_window_v1_exit_fullscreen(window->obj);
+	river_window_v1_inform_not_fullscreen(window->obj);
+	window->fullscreen = false;
+}
+
 
 // Handle creation/deletion of the core objects that all point to each other.
 //  - These run before the relevant wl_list in wm is updated
@@ -242,9 +248,7 @@ extern void manage_window_deferred(struct Window *window) {
 		window->enter_fullscreen = false;
 	}
 	if (window->exit_fullscreen) {
-		river_window_v1_exit_fullscreen(window->obj);
-		river_window_v1_inform_not_fullscreen(window->obj);
-		window->fullscreen = false;
+		unfullscreen_window(window);
 		window->exit_fullscreen = false;
 	}
 }
@@ -267,6 +271,13 @@ extern void manage_seat_focus(struct Seat *seat) {
 		river_seat_v1_focus_window(seat->obj, seat->focused->focused->obj);
 	else
 		river_seat_v1_clear_focus(seat->obj);
+
+	// Un-fullscreen if there's a layer shell focused
+	if (seat->focused->focused != NULL
+			&& seat->focused->focused->fullscreen
+			&& seat->ls_focused) {
+		unfullscreen_window(seat->focused->focused);
+	}
 
 	// Warp the pointer to the focused window
 	if (pointer_follows_focus && seat->warp && !seat->ls_focused) {
@@ -294,11 +305,8 @@ extern void manage_space(struct Space *space) {
 	wl_list_for_each(window, &wm.windows, link) {
 		if (window->space != output->active || !valid_rect(window->layout))
 			continue;
-		if (window->fullscreen && window->space->focused != window) {
-			river_window_v1_exit_fullscreen(window->obj);
-			river_window_v1_inform_not_fullscreen(window->obj);
-			window->fullscreen = false;
-		}
+		if (window->fullscreen && window->space->focused != window)
+			unfullscreen_window(window);
 		river_window_v1_use_ssd(window->obj);
 		river_window_v1_set_tiled(window->obj, 15);
 		river_window_v1_propose_dimensions(window->obj,
