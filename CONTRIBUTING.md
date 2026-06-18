@@ -15,8 +15,7 @@ changes, rather than produce code, issues are also welcome.
 -   Alternate layouts
 -   Alternate space-management schemes (i.e., dynamic spaces)
 -   Correctness improvements and/or better protocol integration
--   Improvements to configuration, either via better code organization, or via
-    (optional) dynamic configuration mechanisms
+-   (Optional) dynamic configuration via IPC or file
 
 
 ## Code guidelines
@@ -30,6 +29,8 @@ contradicts these guidelines are welcome.
 
 -   Predicate functions should be named `condition_object`, like `idle_space`,
     rather than something like `is_space_idle` or `space_idle_p`.
+
+-   Where they are in tension, prefer simplicity and legibility over concision.
 
 -   Loops and conditionals should always have braces, unless they contain only
     other conditionals without braces or a single statement with no comment (and

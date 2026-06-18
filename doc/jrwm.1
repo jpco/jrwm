@@ -73,20 +73,7 @@ Send the currently focused window to the
 space.
 .SH CUSTOMIZATION
 JrWM has no dynamic customization mechanism and changes to the behavior
-described in this document must be made by editing its source.
-There are three C files in the JrWM source.
-.TP
-.B jrwm.c
-Defines the protocol interactions and dispatches to the other files.
-Largely not relevant to customization, but may require changes to ensure state
-is captured from Wayland events, or propagated to Wayland requests, properly.
-.TP
-.B layout.c
-Defines window layout, rendering information such as borders and colors, and
-behavior on window, output, space, or seat creation and deletion.
-.TP
-.B bindings.c
-Defines key bindings, both for internally-impacting actions like changing window
-focus and for the argv of external spawned programs.
+described in this document must be made by editing the file
+.BR config.c .
 .SH BUGS
 Bugs may be reported on the GitHub repository: https://github.com/jpco/jrwm.

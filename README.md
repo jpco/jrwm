@@ -27,11 +27,7 @@ _A screenshot of JrWM featuring waybar, foot, vim,
 
 ## Configuration
 
-Configuration, such as it is, is done by editing the source:
-
--   `bindings.c` contains key bindings
--   `layout.c` contains window decoration and layout
--   `jrwm.c` contains Wayland event handling
+Configuration, such as it is, is done by editing the file `config.c`.
 
 
 ## Building and installation

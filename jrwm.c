@@ -34,13 +34,6 @@ struct river_window_manager_v1 *window_manager_v1;
 struct river_xkb_bindings_v1 *xkb_bindings_v1;
 struct river_layer_shell_v1 *layer_shell_v1;
 
-// How many static Spaces are allocated on startup.  This does not limit the
-// total number of spaces, which will always be at least 1, but static spaces
-// are never "collected", while additional spaces may be
-static int static_spaces = 9;
-
-static bool focus_follows_pointer = true;
-
 
 // Utility functions for the rest of the binary
 
@@ -62,7 +55,7 @@ extern struct Output *active_on_output(struct Space *space) {
 
 extern struct Space *create_space(void) {
 	struct Space *space = calloc(1, sizeof(struct Space));
-	space->layout = tiled_layout;
+	space->layout = default_layout;
 	return space;
 }
 

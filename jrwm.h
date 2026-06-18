@@ -91,6 +91,18 @@ struct Seat {
 	struct Space *focused;  // Non-null
 };
 
+// Args and Binddefs are used to configure XkbBindings
+union Arg {
+	char **v;
+	int32_t i;
+};
+
+struct Binddef {
+	int32_t mod, key;
+	void (*dispatch)(struct Seat *, union Arg);
+	union Arg arg;
+};
+
 struct WindowManager {
 	struct wl_list outputs; // Output
 	struct wl_list windows; // Window
@@ -140,10 +152,48 @@ extern void render_seat_focus(struct Seat *);
 
 // bindings.c
 
+// Binding functions which may be called from Binddefs
+extern void binding_spawn(struct Seat *, union Arg);
+extern void binding_exit(struct Seat *, union Arg);
+extern void binding_close(struct Seat *, union Arg);
+
+extern void binding_toggle_monocle(struct Seat *, union Arg);
+
+extern void binding_focus_next(struct Seat *, union Arg);
+extern void binding_focus_prev(struct Seat *, union Arg);
+extern void binding_move_next(struct Seat *, union Arg);
+extern void binding_move_prev(struct Seat *, union Arg);
+
+extern void binding_activate_space(struct Seat *, union Arg);
+extern void binding_move_to_space(struct Seat *, union Arg);
+
+// Functions used to manage bindings
 extern void init_xkb_bindings(struct Seat *);
 extern void manage_xkb_bindings(struct Seat *);
 extern void remove_xkb_bindings(struct Seat *);
 extern void lock_xkb_bindings(struct Seat *);
 extern void unlock_xkb_bindings(struct Seat *);
+
+
+// config.c
+
+extern int static_spaces;
+extern void (*default_layout)(struct Space *, struct Rect);
+
+extern uint32_t border_color[4];
+extern uint32_t focused_color[4];
+
+extern int monocle_borderpx;
+
+extern int tiled_borderpx;
+extern int tiled_margin;
+extern int tiled_output_padding;
+extern float tiled_splitratio;
+
+extern bool focus_follows_pointer;
+extern bool pointer_follows_focus;
+
+extern struct Binddef binds[];
+
 
 #endif

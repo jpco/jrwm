@@ -19,27 +19,6 @@
 
 #include "jrwm.h"
 
-
-// Settings for layout and borders
-
-#define	COLOR(hex)	{ ((hex >> 24) & 0xFF) * (UINT32_MAX / 255), \
-			  ((hex >> 16) & 0xFF) * (UINT32_MAX / 255), \
-			  ((hex >>  8) & 0xFF) * (UINT32_MAX / 255), \
-			  ( hex        & 0xFF) * (UINT32_MAX / 255) }
-
-static uint32_t border_color[4] = COLOR(0x333333ff);
-static uint32_t focused_color[4] = COLOR(0x77aa99ff);
-
-static int monocle_borderpx	=  0;
-
-static int tiled_borderpx	=  2;
-static int tiled_margin		= -2;	// Space between windows
-static int tiled_output_padding	=  0;	// Space around windows
-static float tiled_splitratio	=  0.52;
-
-static bool pointer_follows_focus = false;
-
-
 // Private functions for window management and rendering
 
 static bool valid_rect(struct Rect r) {

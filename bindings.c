@@ -28,17 +28,6 @@
 
 // Types
 
-union Arg {
-	char **v;
-	int32_t i;
-};
-
-struct Binddef {
-	int32_t mod, key;
-	void (*dispatch)(struct Seat *, union Arg);
-	union Arg arg;
-};
-
 enum BindingManageAction {
 	BINDING_MANAGE_NONE,
 	BINDING_MANAGE_ENABLE,
@@ -54,81 +43,6 @@ struct XkbBinding {
 	union Arg arg;
 	enum BindingManageAction manage;  // What to do on next window_manage
 };
-
-
-// Binding declarations and configuration
-
-// Bindings to manage single objects
-static void binding_spawn(struct Seat *seat, union Arg arg);
-static void binding_exit(struct Seat *seat, union Arg arg);
-static void binding_close(struct Seat *seat, union Arg arg);
-static void binding_toggle_monocle(struct Seat *seat, union Arg arg);
-
-// Bindings to move focus and objects through the WM
-static void binding_focus_next(struct Seat *seat, union Arg arg);
-static void binding_focus_prev(struct Seat *seat, union Arg arg);
-static void binding_move_next(struct Seat *seat, union Arg arg);
-static void binding_move_prev(struct Seat *seat, union Arg arg);
-static void binding_activate_space(struct Seat *seat, union Arg arg);
-static void binding_move_to_space(struct Seat *seat, union Arg arg);
-
-
-// TODO: De-personalize these so that they are actually useful for other people.
-static char *spawn_foot[]	= {"footclient", NULL};
-static char *spawn_rofi[]	= {"rofi", "-show", "combi", NULL};
-static char *spawn_mute[]	= {"mediactl", "pamixer", "--mute", "--set-volume", "0", NULL};
-static char *spawn_volume_up[]	= {"mediactl", "pamixer", "--unmute", "--increase", "5", NULL};
-static char *spawn_volume_down[]	= {"mediactl", "pamixer", "--decrease", "5", NULL};
-static char *spawn_brightness_up[]	= {"mediactl", "brightnessctl", "-e", "set", "5%+", NULL};
-static char *spawn_brightness_down[]	= {"mediactl", "brightnessctl", "-e", "set", "5%-", NULL};
-
-
-#define super	RIVER_SEAT_V1_MODIFIERS_MOD4
-#define shift	RIVER_SEAT_V1_MODIFIERS_SHIFT
-#define none	RIVER_SEAT_V1_MODIFIERS_NONE
-
-struct Binddef binds[] = {
-	{super, XKB_KEY_q, binding_close, {0}},
-	{super|shift, XKB_KEY_e, binding_exit, {0}},
-	{super, XKB_KEY_j, binding_focus_next, {0}},
-	{super, XKB_KEY_k, binding_focus_prev, {0}},
-	{super|shift, XKB_KEY_j, binding_move_next, {0}},
-	{super|shift, XKB_KEY_k, binding_move_prev, {0}},
-	{super, XKB_KEY_m, binding_toggle_monocle, {0}},
-
-	{super, XKB_KEY_1, binding_activate_space, {.i = 1}},
-	{super, XKB_KEY_2, binding_activate_space, {.i = 2}},
-	{super, XKB_KEY_3, binding_activate_space, {.i = 3}},
-	{super, XKB_KEY_4, binding_activate_space, {.i = 4}},
-	{super, XKB_KEY_5, binding_activate_space, {.i = 5}},
-	{super, XKB_KEY_6, binding_activate_space, {.i = 6}},
-	{super, XKB_KEY_7, binding_activate_space, {.i = 7}},
-	{super, XKB_KEY_8, binding_activate_space, {.i = 8}},
-	{super, XKB_KEY_9, binding_activate_space, {.i = 9}},
-
-	{super|shift, XKB_KEY_1, binding_move_to_space, {.i = 1}},
-	{super|shift, XKB_KEY_2, binding_move_to_space, {.i = 2}},
-	{super|shift, XKB_KEY_3, binding_move_to_space, {.i = 3}},
-	{super|shift, XKB_KEY_4, binding_move_to_space, {.i = 4}},
-	{super|shift, XKB_KEY_5, binding_move_to_space, {.i = 5}},
-	{super|shift, XKB_KEY_6, binding_move_to_space, {.i = 6}},
-	{super|shift, XKB_KEY_7, binding_move_to_space, {.i = 7}},
-	{super|shift, XKB_KEY_8, binding_move_to_space, {.i = 8}},
-	{super|shift, XKB_KEY_9, binding_move_to_space, {.i = 9}},
-
-	{super, XKB_KEY_Return, binding_spawn, {.v = spawn_foot}},
-	{super, XKB_KEY_space, binding_spawn, {.v = spawn_rofi}},
-	{none, XKB_KEY_XF86AudioMute, binding_spawn, {.v = spawn_mute}},
-	{none, XKB_KEY_XF86AudioRaiseVolume, binding_spawn, {.v = spawn_volume_up}},
-	{none, XKB_KEY_XF86AudioLowerVolume, binding_spawn, {.v = spawn_volume_down}},
-	{none, XKB_KEY_XF86MonBrightnessUp, binding_spawn, {.v = spawn_brightness_up}},
-	{none, XKB_KEY_XF86MonBrightnessDown, binding_spawn, {.v = spawn_brightness_down}},
-	{0, 0, NULL, {0}}
-};
-
-#undef super
-#undef shift
-#undef none
 
 
 // Utility functions for bindings
@@ -172,7 +86,7 @@ static struct Space *nth_space(int n) {
 // Binding function definitions
 // None of these functions run during a manage or render sequence
 
-static void binding_spawn(struct Seat *seat, union Arg arg) {
+extern void binding_spawn(struct Seat *seat, union Arg arg) {
 	struct sigaction sa;
 	if (fork() == 0) {
 		setsid();
@@ -187,24 +101,24 @@ static void binding_spawn(struct Seat *seat, union Arg arg) {
 	}
 }
 
-static void binding_exit(struct Seat *seat, union Arg arg) {
+extern void binding_exit(struct Seat *seat, union Arg arg) {
 	river_window_manager_v1_exit_session(window_manager_v1);
 }
 
-static void binding_close(struct Seat *seat, union Arg arg) {
+extern void binding_close(struct Seat *seat, union Arg arg) {
 	if (seat->focused->focused != NULL)
 		seat->focused->focused->close = true;
 }
 
-static void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
+extern void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
-	if (space->layout == tiled_layout)
+	if (space->layout != monocle_layout)
 		space->layout = monocle_layout;
 	else
-		space->layout = tiled_layout;
+		space->layout = default_layout;
 }
 
-static void binding_focus_next(struct Seat *seat, union Arg arg) {
+extern void binding_focus_next(struct Seat *seat, union Arg arg) {
 	struct Window *window = next_window(seat->focused->focused, NULL);
 	if (window == NULL)
 		return;
@@ -212,7 +126,7 @@ static void binding_focus_next(struct Seat *seat, union Arg arg) {
 	seat->warp = true;
 }
 
-static void binding_focus_prev(struct Seat *seat, union Arg arg) {
+extern void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	struct Window *window = prev_window(seat->focused->focused, NULL);
 	if (window == NULL)
 		return;
@@ -220,7 +134,7 @@ static void binding_focus_prev(struct Seat *seat, union Arg arg) {
 	seat->warp = true;
 }
 
-static void binding_move_next(struct Seat *seat, union Arg arg) {
+extern void binding_move_next(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
 	struct Window *target = next_window(window, NULL);
 	if (window == NULL || target == NULL)
@@ -235,7 +149,7 @@ static void binding_move_next(struct Seat *seat, union Arg arg) {
 	seat->warp = true;
 }
 
-static void binding_move_prev(struct Seat *seat, union Arg arg) {
+extern void binding_move_prev(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
 	struct Window *target = prev_window(window, NULL);
 	if (window == NULL || target == NULL)
@@ -251,7 +165,7 @@ static void binding_move_prev(struct Seat *seat, union Arg arg) {
 }
 
 // Activate and focus the nth Space
-static void binding_activate_space(struct Seat *seat, union Arg arg) {
+extern void binding_activate_space(struct Seat *seat, union Arg arg) {
 	struct Space *space = nth_space(arg.i);
 	if (space == NULL)
 		return;
@@ -269,7 +183,7 @@ static void binding_activate_space(struct Seat *seat, union Arg arg) {
 }
 
 // Move the currently focused Window to the nth Space
-static void binding_move_to_space(struct Seat *seat, union Arg arg) {
+extern void binding_move_to_space(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
 	struct Space *space = nth_space(arg.i);
 	if (window == NULL || space == NULL)
