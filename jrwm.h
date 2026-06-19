@@ -71,7 +71,6 @@ struct Window {
 	bool enter_fullscreen;  // window_v1.inform_fullscreen
 	bool exit_fullscreen;   // window_v1.inform_not_fullscreen
 	bool enter_fake_fullscreen;
-	bool exit_fake_fullscreen;
 
 	// Information for the render sequence
 	struct Rect layout;
