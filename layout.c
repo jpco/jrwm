@@ -41,6 +41,7 @@ static void render_border(struct Window *window, int thickness, uint32_t *color)
 static void unfullscreen_window(struct Window *window) {
 	river_window_v1_exit_fullscreen(window->obj);
 	river_window_v1_inform_not_fullscreen(window->obj);
+	window->fake_fullscreen = false;
 	window->fullscreen = false;
 }
 
@@ -223,6 +224,11 @@ extern void manage_window_deferred(struct Window *window) {
 	if (window->close) {
 		river_window_v1_close(window->obj);
 		window->close = false;
+	}
+	if (window->enter_fake_fullscreen) {
+		river_window_v1_inform_fullscreen(window->obj);
+		window->fake_fullscreen = true;
+    	window->enter_fake_fullscreen = false;
 	}
 	if (window->enter_fullscreen) {
 		struct Space *space = window->space;

@@ -81,6 +81,7 @@ struct Binddef binds[] = {
 	{super,       XKB_KEY_k, binding_focus_prev,     {0}},
 	{super|shift, XKB_KEY_k, binding_move_prev,      {0}},
 	{super,       XKB_KEY_m, binding_toggle_monocle, {0}},
+	{super|shift, XKB_KEY_m, binding_toggle_fake_fullscreen, {0}},
 	{super,       XKB_KEY_h, binding_activate_prev_busy_space, {0}},
 	{super,       XKB_KEY_l, binding_activate_next_busy_space, {0}},
 	{super|alt,   XKB_KEY_h, binding_activate_prev_space,      {0}},

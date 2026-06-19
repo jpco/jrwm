@@ -63,12 +63,14 @@ struct Window {
 
 	bool maximized;  // The window has been inform_maximized
 	bool fullscreen; // The window is fullscreen
+	bool fake_fullscreen; // The window acts as if fullscreen
 
 	// Deferred tasks for the manage sequence
 	bool set_capabilities;  // window_v1.set_capabilities
 	bool close;             // window_v1.close
 	bool enter_fullscreen;  // window_v1.inform_fullscreen
 	bool exit_fullscreen;   // window_v1.inform_not_fullscreen
+	bool enter_fake_fullscreen;
 
 	// Information for the render sequence
 	struct Rect layout;
@@ -157,6 +159,7 @@ extern void binding_spawn(struct Seat *, union Arg);
 extern void binding_exit(struct Seat *, union Arg);
 extern void binding_close(struct Seat *, union Arg);
 
+extern void binding_toggle_fake_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_monocle(struct Seat *, union Arg);
 
