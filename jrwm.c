@@ -47,6 +47,18 @@ extern bool idle_space(struct Space *space) {
 	return (space->output == NULL || space->output->active != space);
 }
 
+extern bool busy_space(struct Space *space) {
+	struct Window *w;
+	wl_list_for_each(w, &wm.windows, link)
+		if (w->space == space)
+			return true;
+	return false;
+}
+
+extern bool any_space(struct Space *space) {
+	return true;
+}
+
 extern struct Output *active_on_output(struct Space *space) {
 	if (space->output != NULL && space->output->active == space)
 		return space->output;

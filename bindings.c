@@ -63,6 +63,15 @@ static void activate_space(struct Seat *seat, struct Space *space) {
 	seat->focused = space;
 }
 
+static void move_to_space(struct Window *window, struct Space *space) {
+	if (window == NULL || space == NULL)
+		return;
+
+	replace_window(window);  // Sensible?
+	window->space = space;
+	space->focused = window;
+}
+
 static struct Window *next_window(struct Window *window, struct wl_list *list) {
 	if (window == NULL)
 		return NULL;
@@ -98,90 +107,31 @@ static struct Space *nth_space(int n) {
 	return NULL;
 }
 
-static struct Space *next_busy_space(struct Space *space) {
-	struct Space *target;
-	struct Window *w;
-	wl_list_for_each(target, &space->link, link) {
-		if (&target->link == &wm.spaces)
-			continue;
-		wl_list_for_each(w, &wm.windows, link)
-			if (w->space == target)
-				return target;
-	}
-	return NULL;
-}
-static struct Space *next_idle_space(struct Space *space) {
+static struct Space *next_space(struct Space *space, bool (*filter)(struct Space *)) {
 	struct Space *target;
 	wl_list_for_each(target, &space->link, link) {
 		if (&target->link == &wm.spaces)
 			continue;
-		if (idle_space(target))
+		if (filter(target))
 			return target;
 	}
 	return NULL;
 }
-static struct Space *next_space(struct Space *space) {
-	struct Space *target;
-	wl_list_for_each(target, &space->link, link) {
-		if (&target->link == &wm.spaces)
-			continue;
-		return target;
-	}
-	return NULL;
-}
-static struct Space *prev_busy_space(struct Space *space) {
-	struct Space *target;
-	struct Window *w;
-	wl_list_for_each_reverse(target, &space->link, link) {
-		if (&target->link == &wm.spaces)
-			continue;
-		wl_list_for_each(w, &wm.windows, link)
-			if (w->space == target)
-				return target;
-	}
-	return NULL;
-}
-static struct Space *prev_idle_space(struct Space *space) {
+
+static struct Space *prev_space(struct Space *space, bool (*filter)(struct Space *)) {
 	struct Space *target;
 	wl_list_for_each_reverse(target, &space->link, link) {
 		if (&target->link == &wm.spaces)
 			continue;
-		if (idle_space(target))
+		if (filter(space))
 			return target;
 	}
 	return NULL;
 }
-static struct Space *prev_space(struct Space *space) {
-	struct Space *target;
-	wl_list_for_each_reverse(target, &space->link, link) {
-		if (&target->link == &wm.spaces)
-			continue;
-		return target;
-	}
-	return NULL;
-}
+
 
 // Binding function definitions
 // None of these functions run during a manage or render sequence
-
-extern void binding_activate_next_busy_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, next_busy_space(seat->focused));
-}
-extern void binding_activate_next_idle_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, next_idle_space(seat->focused));
-}
-extern void binding_activate_next_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, next_space(seat->focused));
-}
-extern void binding_activate_prev_busy_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, prev_busy_space(seat->focused));
-}
-extern void binding_activate_prev_idle_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, prev_idle_space(seat->focused));
-}
-extern void binding_activate_prev_space(struct Seat *seat, union Arg arg) {
-    activate_space(seat, prev_space(seat->focused));
-}
 
 extern void binding_spawn(struct Seat *seat, union Arg arg) {
 	struct sigaction sa;
@@ -220,7 +170,7 @@ extern void binding_toggle_fake_fullscreen(struct Seat *seat, union Arg arg) {
 extern void binding_toggle_fullscreen(struct Seat *seat, union Arg arg) {
 	struct Window *window = seat->focused->focused;
 	if (window == NULL)
-    	return;
+	return;
 	if (window->fullscreen)
 		window->exit_fullscreen = true;
 	else
@@ -281,24 +231,37 @@ extern void binding_move_prev(struct Seat *seat, union Arg arg) {
 	seat->warp = true;
 }
 
-// Activate and focus the nth Space
 extern void binding_activate_space(struct Seat *seat, union Arg arg) {
-	struct Space *space = nth_space(arg.i);
-	if (space == NULL)
-		return;
-	activate_space(seat, space);
+	activate_space(seat, nth_space(arg.i));
+}
+
+extern void binding_activate_next_busy_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, next_space(seat->focused, busy_space));
+}
+
+extern void binding_activate_next_idle_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, next_space(seat->focused, idle_space));
+}
+
+extern void binding_activate_next_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, next_space(seat->focused, any_space));
+}
+
+extern void binding_activate_prev_busy_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, prev_space(seat->focused, busy_space));
+}
+
+extern void binding_activate_prev_idle_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, prev_space(seat->focused, idle_space));
+}
+
+extern void binding_activate_prev_space(struct Seat *seat, union Arg arg) {
+	activate_space(seat, prev_space(seat->focused, any_space));
 }
 
 // Move the currently focused Window to the nth Space
 extern void binding_move_to_space(struct Seat *seat, union Arg arg) {
-	struct Window *window = seat->focused->focused;
-	struct Space *space = nth_space(arg.i);
-	if (window == NULL || space == NULL)
-		return;
-
-	replace_window(window);  // Sensible?
-	window->space = space;
-	space->focused = window;
+	move_to_space(seat->focused->focused, nth_space(arg.i));
 }
 
 

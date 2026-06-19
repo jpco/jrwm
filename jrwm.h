@@ -122,6 +122,8 @@ extern struct river_xkb_bindings_v1 *xkb_bindings_v1;
 extern struct river_layer_shell_v1 *layer_shell_v1;
 
 extern bool idle_space(struct Space *);
+extern bool busy_space(struct Space *);
+extern bool any_space(struct Space *);
 extern struct Output *active_on_output(struct Space *);
 extern struct Space *create_space(void);
 extern void collect_space(struct Space *);
