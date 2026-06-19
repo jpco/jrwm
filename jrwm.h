@@ -157,6 +157,7 @@ extern void binding_spawn(struct Seat *, union Arg);
 extern void binding_exit(struct Seat *, union Arg);
 extern void binding_close(struct Seat *, union Arg);
 
+extern void binding_toggle_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_monocle(struct Seat *, union Arg);
 
 extern void binding_focus_next(struct Seat *, union Arg);
