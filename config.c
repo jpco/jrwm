@@ -81,6 +81,7 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_k, binding_move_prev,      {0}},
 	{super,       XKB_KEY_m, binding_toggle_monocle, {0}},
 	{super|shift, XKB_KEY_m, binding_toggle_fake_fullscreen, {0}},
+	{super|shift, XKB_KEY_f, binding_toggle_fullscreen, {0}},
 
 	// Bindings to refer to spaces by number; best used with static_spaces = 9
 	{super,       XKB_KEY_1, binding_activate_space, {.i = 1}},

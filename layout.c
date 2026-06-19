@@ -85,6 +85,7 @@ extern void place_output(struct Output *output) {
 extern void replace_output(struct Output *output) {
 	struct Output *replacement = NULL, *r;
 	struct Space *space;
+	struct Seat *seat;
 
 	// Pick a random other Output, if there are any.
 	wl_list_for_each(r, &wm.outputs, link)
@@ -92,9 +93,17 @@ extern void replace_output(struct Output *output) {
 			replacement = r;
 
 	// Assign that Output (or NULL, if no other Outputs exist) to any Spaces
-	wl_list_for_each(space, &wm.spaces, link)
-		if (space->output == output)
-			space->output = replacement;
+	wl_list_for_each(space, &wm.spaces, link) {
+		if (space->output != output)
+			continue;
+		space->output = replacement;
+
+		// Make the Space active on the new Output if it is focused
+		if (space == output->active)
+			wl_list_for_each(seat, &wm.seats, link)
+				if (space == seat->focused)
+					space->output->active = space;
+	}
 }
 
 // Find a Space for this Window to be in
