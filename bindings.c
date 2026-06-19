@@ -123,7 +123,7 @@ static struct Space *prev_space(struct Space *space, bool (*filter)(struct Space
 	wl_list_for_each_reverse(target, &space->link, link) {
 		if (&target->link == &wm.spaces)
 			continue;
-		if (filter(space))
+		if (filter(target))
 			return target;
 	}
 	return NULL;
