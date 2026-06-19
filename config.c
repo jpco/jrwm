@@ -65,7 +65,8 @@ static char *spawn_volume_down[] = {"mediactl", "pamixer", "--decrease", "5", NU
 static char *spawn_brightness_up[] = {"mediactl", "brightnessctl", "-e", "set", "5%+", NULL};
 static char *spawn_brightness_down[] = {"mediactl", "brightnessctl", "-e", "set", "5%-", NULL};
 
-
+#define alt		RIVER_SEAT_V1_MODIFIERS_MOD1
+#define ctrl	RIVER_SEAT_V1_MODIFIERS_CTRL
 #define super	RIVER_SEAT_V1_MODIFIERS_MOD4
 #define shift	RIVER_SEAT_V1_MODIFIERS_SHIFT
 #define none	RIVER_SEAT_V1_MODIFIERS_NONE
@@ -81,6 +82,12 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_k, binding_move_prev,      {0}},
 	{super,       XKB_KEY_m, binding_toggle_monocle, {0}},
 	{super|shift, XKB_KEY_m, binding_toggle_fake_fullscreen, {0}},
+	{super,       XKB_KEY_h, binding_activate_prev_busy_space, {0}},
+	{super,       XKB_KEY_l, binding_activate_next_busy_space, {0}},
+	{super|alt,   XKB_KEY_h, binding_activate_prev_space,      {0}},
+	{super|alt,   XKB_KEY_l, binding_activate_next_space,      {0}},
+	{super,       XKB_KEY_o, binding_activate_next_idle_space, {0}},
+	{super|ctrl,  XKB_KEY_o, binding_activate_prev_idle_space, {0}},
 	{super|shift, XKB_KEY_f, binding_toggle_fullscreen, {0}},
 
 	// Bindings to refer to spaces by number; best used with static_spaces = 9
@@ -119,6 +126,8 @@ struct Binddef binds[] = {
 	{0, 0, NULL, {0}}
 };
 
+#undef alt
+#undef ctrl
 #undef super
 #undef shift
 #undef none

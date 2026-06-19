@@ -47,6 +47,22 @@ struct XkbBinding {
 
 // Utility functions for bindings
 
+static void activate_space(struct Seat *seat, struct Space *space) {
+	if (space == NULL)
+		return;
+
+	// If the Space isn't already active on any Output, yank it here
+	if (active_on_output(space) == NULL)
+		space->output = seat->focused->output;
+
+	if (space->output->active != space) {
+		struct Space *tmp = space->output->active;
+		space->output->active = space;
+		collect_space(tmp);
+	}
+	seat->focused = space;
+}
+
 static struct Window *next_window(struct Window *window, struct wl_list *list) {
 	if (window == NULL)
 		return NULL;
@@ -82,9 +98,90 @@ static struct Space *nth_space(int n) {
 	return NULL;
 }
 
+static struct Space *next_busy_space(struct Space *space) {
+	struct Space *target;
+	struct Window *w;
+	wl_list_for_each(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		wl_list_for_each(w, &wm.windows, link)
+			if (w->space == target)
+				return target;
+	}
+	return NULL;
+}
+static struct Space *next_idle_space(struct Space *space) {
+	struct Space *target;
+	wl_list_for_each(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		if (idle_space(target))
+			return target;
+	}
+	return NULL;
+}
+static struct Space *next_space(struct Space *space) {
+	struct Space *target;
+	wl_list_for_each(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		return target;
+	}
+	return NULL;
+}
+static struct Space *prev_busy_space(struct Space *space) {
+	struct Space *target;
+	struct Window *w;
+	wl_list_for_each_reverse(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		wl_list_for_each(w, &wm.windows, link)
+			if (w->space == target)
+				return target;
+	}
+	return NULL;
+}
+static struct Space *prev_idle_space(struct Space *space) {
+	struct Space *target;
+	wl_list_for_each_reverse(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		if (idle_space(target))
+			return target;
+	}
+	return NULL;
+}
+static struct Space *prev_space(struct Space *space) {
+	struct Space *target;
+	wl_list_for_each_reverse(target, &space->link, link) {
+		if (&target->link == &wm.spaces)
+			continue;
+		return target;
+	}
+	return NULL;
+}
 
 // Binding function definitions
 // None of these functions run during a manage or render sequence
+
+extern void binding_activate_next_busy_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, next_busy_space(seat->focused));
+}
+extern void binding_activate_next_idle_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, next_idle_space(seat->focused));
+}
+extern void binding_activate_next_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, next_space(seat->focused));
+}
+extern void binding_activate_prev_busy_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, prev_busy_space(seat->focused));
+}
+extern void binding_activate_prev_idle_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, prev_idle_space(seat->focused));
+}
+extern void binding_activate_prev_space(struct Seat *seat, union Arg arg) {
+    activate_space(seat, prev_space(seat->focused));
+}
 
 extern void binding_spawn(struct Seat *seat, union Arg arg) {
 	struct sigaction sa;
@@ -188,17 +285,7 @@ extern void binding_activate_space(struct Seat *seat, union Arg arg) {
 	struct Space *space = nth_space(arg.i);
 	if (space == NULL)
 		return;
-
-	// If the Space isn't already active on any Output, yank it here
-	if (active_on_output(space) == NULL)
-		space->output = seat->focused->output;
-
-	if (space->output->active != space) {
-		struct Space *tmp = space->output->active;
-		space->output->active = space;
-		collect_space(tmp);
-	}
-	seat->focused = space;
+	activate_space(seat, space);
 }
 
 // Move the currently focused Window to the nth Space

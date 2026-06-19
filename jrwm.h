@@ -169,6 +169,13 @@ extern void binding_focus_prev(struct Seat *, union Arg);
 extern void binding_move_next(struct Seat *, union Arg);
 extern void binding_move_prev(struct Seat *, union Arg);
 
+extern void binding_activate_next_busy_space(struct Seat *, union Arg);
+extern void binding_activate_prev_busy_space(struct Seat *, union Arg);
+extern void binding_activate_next_idle_space(struct Seat *, union Arg);
+extern void binding_activate_prev_idle_space(struct Seat *, union Arg);
+extern void binding_activate_next_space(struct Seat *, union Arg);
+extern void binding_activate_prev_space(struct Seat *, union Arg);
+
 extern void binding_activate_space(struct Seat *, union Arg);
 extern void binding_move_to_space(struct Seat *, union Arg);
 
