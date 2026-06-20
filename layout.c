@@ -102,7 +102,7 @@ extern void replace_output(struct Output *output) {
 		// Make the Space active on the new Output if it is focused
 		if (space == output->active)
 			wl_list_for_each(seat, &wm.seats, link)
-				if (space == seat->focused)
+				if (space == seat->focused && space->output != NULL)
 					space->output->active = space;
 	}
 }
