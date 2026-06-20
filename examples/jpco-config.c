@@ -1,4 +1,6 @@
-// config.c -- Static configuration for JrWM
+// jpco-config.c -- jpco's static configuration for JrWM
+
+// Looks a lot like the default because the default is based on jpco's config
 
 // JrWM is free software: you can redistribute it and/or modify it under the
 // terms of the GNU General Public License as published by the Free Software
@@ -57,11 +59,14 @@ bool pointer_follows_focus = false;
 
 // Keybinds and spawns
 
-static char *spawn_foot[] = {"foot", NULL};
+static char *spawn_foot[] = {"footclient", NULL};
 static char *spawn_rofi[] = {"rofi", "-show", "combi", NULL};
+static char *spawn_mute[] = {"mediactl", "pamixer", "--mute", "--set-volume", "0", NULL};
+static char *spawn_volume_up[] = {"mediactl", "pamixer", "--unmute", "--increase", "5", NULL};
+static char *spawn_volume_down[] = {"mediactl", "pamixer", "--decrease", "5", NULL};
+static char *spawn_brightness_up[] = {"mediactl", "brightnessctl", "-e", "set", "5%+", NULL};
+static char *spawn_brightness_down[] = {"mediactl", "brightnessctl", "-e", "set", "5%-", NULL};
 
-#define alt	RIVER_SEAT_V1_MODIFIERS_MOD1
-#define ctrl	RIVER_SEAT_V1_MODIFIERS_CTRL
 #define super	RIVER_SEAT_V1_MODIFIERS_MOD4
 #define shift	RIVER_SEAT_V1_MODIFIERS_SHIFT
 #define none	RIVER_SEAT_V1_MODIFIERS_NONE
@@ -80,14 +85,6 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_j, binding_move_next,  {0}},
 	{super,       XKB_KEY_k, binding_focus_prev, {0}},
 	{super|shift, XKB_KEY_k, binding_move_prev,  {0}},
-
-	// Bindings for relative motion between spaces
-	{super,       XKB_KEY_h, binding_activate_prev_busy_space, {0}},
-	{super,       XKB_KEY_l, binding_activate_next_busy_space, {0}},
-	{super|alt,   XKB_KEY_h, binding_activate_prev_space,      {0}},
-	{super|alt,   XKB_KEY_l, binding_activate_next_space,      {0}},
-	{super,       XKB_KEY_o, binding_activate_next_idle_space, {0}},
-	{super|ctrl,  XKB_KEY_o, binding_activate_prev_idle_space, {0}},
 
 	// Bindings to refer to spaces by number; best used with static_spaces = 9
 	{super,       XKB_KEY_1, binding_activate_space, {.i = 1}},
@@ -113,6 +110,12 @@ struct Binddef binds[] = {
 
 	spawn_binding(super, XKB_KEY_Return, spawn_foot),
 	spawn_binding(super, XKB_KEY_space,  spawn_rofi),
+
+	spawn_binding(none,  XKB_KEY_XF86AudioMute,         spawn_mute),
+	spawn_binding(none,  XKB_KEY_XF86AudioRaiseVolume,  spawn_volume_up),
+	spawn_binding(none,  XKB_KEY_XF86AudioLowerVolume,  spawn_volume_down),
+	spawn_binding(none,  XKB_KEY_XF86MonBrightnessUp,   spawn_brightness_up),
+	spawn_binding(none,  XKB_KEY_XF86MonBrightnessDown, spawn_brightness_down),
 
 #undef spawn_binding
 
