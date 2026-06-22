@@ -86,6 +86,7 @@ extern struct Output *active_on_output(struct Space *space) {
 extern struct Space *create_space(void) {
 	struct Space *space = calloc(1, sizeof(struct Space));
 	space->layout = default_layout;
+	space->tiled_splitratio = tiled_splitratio;
 	return space;
 }
 

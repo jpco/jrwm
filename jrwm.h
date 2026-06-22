@@ -40,6 +40,7 @@ struct Space {
 	struct Window *focused; // May be null
 
 	bool is_static;         // Static spaces are never removed
+	float tiled_splitratio;
 
 	void (*layout)(struct Space *space, struct Rect bounds);
 };
@@ -164,6 +165,9 @@ extern void binding_close(struct Seat *, union Arg);
 extern void binding_toggle_fake_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_monocle(struct Seat *, union Arg);
+
+extern void binding_increase_split_ratio(struct Seat *, union Arg);
+extern void binding_decrease_split_ratio(struct Seat *, union Arg);
 
 extern void binding_focus_next(struct Seat *, union Arg);
 extern void binding_focus_prev(struct Seat *, union Arg);
