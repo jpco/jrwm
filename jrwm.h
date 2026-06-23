@@ -98,6 +98,7 @@ struct Seat {
 union Arg {
 	char **v;
 	int32_t i;
+	float f;
 };
 
 struct Binddef {
@@ -166,8 +167,7 @@ extern void binding_toggle_fake_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_monocle(struct Seat *, union Arg);
 
-extern void binding_increase_split_ratio(struct Seat *, union Arg);
-extern void binding_decrease_split_ratio(struct Seat *, union Arg);
+extern void binding_change_split_ratio(struct Seat *, union Arg);
 
 extern void binding_focus_next(struct Seat *, union Arg);
 extern void binding_focus_prev(struct Seat *, union Arg);

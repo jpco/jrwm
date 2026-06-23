@@ -80,8 +80,8 @@ struct Binddef binds[] = {
 	{super|shift, XKB_KEY_j, binding_move_next,  {0}},
 	{super,       XKB_KEY_k, binding_focus_prev, {0}},
 	{super|shift, XKB_KEY_k, binding_move_prev,  {0}},
-	{super|alt,   XKB_KEY_h, binding_decrease_split_ratio, {0}},
-	{super|alt,   XKB_KEY_l, binding_increase_split_ratio, {0}},
+	{super|alt,   XKB_KEY_h, binding_change_split_ratio, {.f = -0.1}},
+	{super|alt,   XKB_KEY_l, binding_change_split_ratio, {.f =  0.1}},
 
 	// Bindings for relative motion between spaces
 	{super,       XKB_KEY_h, binding_activate_prev_busy_space, {0}},
