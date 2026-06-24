@@ -129,6 +129,13 @@ static struct Space *prev_space(struct Space *space, bool (*filter)(struct Space
 	return NULL;
 }
 
+static void change_split_ratio(struct Space *space, float change) {
+	float target = space->tiled_splitratio + change;
+	if (target < 0.1 || target > 0.9)
+		return;
+	space->tiled_splitratio = target;
+}
+
 
 // Binding function definitions
 // None of these functions run during a manage or render sequence
@@ -183,6 +190,10 @@ extern void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 		space->layout = monocle_layout;
 	else
 		space->layout = default_layout;
+}
+
+extern void binding_change_split_ratio(struct Seat *seat, union Arg arg) {
+	change_split_ratio(seat->focused, arg.f);
 }
 
 extern void binding_focus_next(struct Seat *seat, union Arg arg) {

@@ -192,7 +192,7 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 			// Left side "main" window
 			window->layout = bounds;
 			if (count > 1)
-				window->layout.width *= tiled_splitratio;
+				window->layout.width *= space->tiled_splitratio;
 
 			rightwidth -= window->layout.width + tiled_margin;
 		} else {
