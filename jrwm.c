@@ -181,6 +181,10 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
 	struct Window *window = data;
+	if (width < window->layout.width)
+		window->layout.x += (window->layout.width - width)/2;
+	if (height < window->layout.height)
+		window->layout.y += (window->layout.height - height)/2;
 	window->layout.width = width;
 	window->layout.height = height;
 }
