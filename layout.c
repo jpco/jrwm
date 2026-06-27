@@ -135,11 +135,24 @@ extern void replace_window(struct Window *window) {
 	if (window->space->focused != window)
 		return;
 	struct Window *r, *replacement = NULL;
-	// Focus the first Window in the Space (or NULL, if no other Window)
-	wl_list_for_each(r, &wm.windows, link) {
-		if (r->space == window->space && r != window) {
+
+	// Focus the previous window in the space, else the first, else none
+	wl_list_for_each_reverse(r, &window->link, link) {
+		if (&r->link == &wm.windows)
+			break;
+		if (r->space == window->space) {
 			replacement = r;
 			break;
+		}
+	}
+	if (replacement == NULL) {
+		wl_list_for_each(r, &window->link, link) {
+			if (&r->link == &wm.windows)
+				break;
+			if (r->space == window->space) {
+				replacement = r;
+				break;
+			}
 		}
 	}
 	window->space->focused = replacement;
