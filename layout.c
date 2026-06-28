@@ -306,7 +306,8 @@ extern void manage_space(struct Space *space) {
 	if (output == NULL)
 		return;
 
-	space->layout(space, output->windowed);
+	if (space->layout != NULL)
+		space->layout(space, output->windowed);
 
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
