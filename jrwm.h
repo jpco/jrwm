@@ -29,6 +29,11 @@
 struct Rect {
 	int32_t x, y, width, height;
 };
+enum SeatOp {
+	SEAT_OP_NONE,
+	SEAT_OP_MOVE,
+	SEAT_OP_RESIZE,
+};
 
 // A Space represents a collection of Windows on an Output with a layout.
 // Space is the "clearing-house" type for the WM; there MUST be at least one
@@ -65,6 +70,7 @@ struct Window {
 	bool maximized;  // The window has been inform_maximized
 	bool fullscreen; // The window is fullscreen
 	bool fake_fullscreen; // The window acts as if fullscreen
+	bool floating;
 
 	// Deferred tasks for the manage sequence
 	bool set_capabilities;  // window_v1.set_capabilities
@@ -75,8 +81,13 @@ struct Window {
 
 	// Information for the render sequence
 	struct Rect layout;
+	struct Rect float_layout;
 
 	struct Space *space;    // Non-null
+
+	struct Seat *pointer_move_requested;
+	struct Seat *pointer_resize_requested;
+	uint32_t pointer_resize_requested_edges;
 };
 
 // A Seat is a collection of input devices.
@@ -92,6 +103,16 @@ struct Seat {
 
 	bool ls_focused;        // Layer shell surface has focus
 	struct Space *focused;  // Non-null
+
+	enum SeatOp op;
+	// For SEAT_OP_MOVE and SEAT_OP_RESIZE
+	struct Window *op_window;
+	int32_t op_start_x, op_start_y;
+	int32_t op_dx, op_dy;
+	bool op_release;
+	// For SEAT_OP_RESIZE only
+	int32_t op_start_width, op_start_height;
+	uint32_t op_edges;
 };
 
 // Args and Binddefs are used to configure XkbBindings
@@ -152,6 +173,7 @@ extern void manage_space(struct Space *);
 extern void manage_seat_focus(struct Seat *);
 
 // Called during the render sequence
+extern void render_pointer_op(struct Seat *);
 extern void render_space(struct Space *);
 extern void render_seat_focus(struct Seat *);
 
@@ -165,6 +187,7 @@ extern void binding_close(struct Seat *, union Arg);
 
 extern void binding_toggle_fake_fullscreen(struct Seat *, union Arg);
 extern void binding_toggle_fullscreen(struct Seat *, union Arg);
+extern void binding_toggle_floating(struct Seat *, union Arg);
 extern void binding_toggle_monocle(struct Seat *, union Arg);
 
 extern void binding_change_split_ratio(struct Seat *, union Arg);

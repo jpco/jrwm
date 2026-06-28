@@ -184,6 +184,13 @@ extern void binding_toggle_fullscreen(struct Seat *seat, union Arg arg) {
 		window->enter_fullscreen = true;
 }
 
+extern void binding_toggle_floating(struct Seat *seat, union Arg arg) {
+	struct Window *window = seat->focused->focused;
+	if (window == NULL)
+		return;
+	window->floating = !window->floating;
+}
+
 extern void binding_toggle_monocle(struct Seat *seat, union Arg arg) {
 	struct Space *space = seat->focused;
 	if (space->layout != monocle_layout)

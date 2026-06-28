@@ -72,6 +72,7 @@ struct Binddef binds[] = {
 	{super,       XKB_KEY_q, binding_close,                  {0}},
 	{super|shift, XKB_KEY_e, binding_exit,                   {0}},
 	{super,       XKB_KEY_m, binding_toggle_monocle,         {0}},
+	{super,       XKB_KEY_f, binding_toggle_floating,        {0}},
 	{super|shift, XKB_KEY_f, binding_toggle_fullscreen,      {0}},
 	{super|shift, XKB_KEY_m, binding_toggle_fake_fullscreen, {0}},
 

@@ -191,11 +191,11 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 	int count = 0, w = 0, rightwidth = bounds.width, rightheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space)
+		if (window->space == space && !window->floating)
 			count++;
 	}
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space)
+		if (window->space != space || window->floating)
 			continue;
 		if (window->maximized) {
 			river_window_v1_inform_unmaximized(window->obj);
@@ -222,6 +222,31 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 	}
 }
 
+static void seat_pointer_move(struct Seat *seat, struct Window *window) {
+	// seat_focus(seat, window);
+	river_seat_v1_op_start_pointer(seat->obj);
+	seat->op = SEAT_OP_MOVE;
+	seat->op_window = window;
+	seat->op_start_x = window->float_layout.x;
+	seat->op_start_y = window->float_layout.y;
+	seat->op_dx = 0;
+	seat->op_dy = 0;
+}
+
+static void seat_pointer_resize(struct Seat *seat, struct Window *window, uint32_t edges) {
+	// seat_focus(seat, window);
+	river_window_v1_inform_resize_start(window->obj);
+	river_seat_v1_op_start_pointer(seat->obj);
+	seat->op = SEAT_OP_RESIZE;
+	seat->op_window = window;
+	seat->op_edges = edges;
+	seat->op_start_x = window->float_layout.x;
+	seat->op_start_y = window->float_layout.y;
+	seat->op_start_width = window->float_layout.width;
+	seat->op_start_height = window->float_layout.height;
+	seat->op_dx = 0;
+	seat->op_dy = 0;
+}
 
 // Manage sequence/render sequence functions
 
@@ -257,6 +282,15 @@ extern void manage_window_deferred(struct Window *window) {
 	if (window->exit_fullscreen) {
 		unfullscreen_window(window);
 		window->exit_fullscreen = false;
+	}
+	if (window->pointer_move_requested != NULL) {
+		seat_pointer_move(window->pointer_move_requested, window);
+		window->pointer_move_requested = NULL;
+	}
+	if (window->pointer_resize_requested != NULL) {
+		seat_pointer_resize(window->pointer_resize_requested, window,
+				window->pointer_resize_requested_edges);
+		window->pointer_resize_requested = NULL;
 	}
 }
 
@@ -314,11 +348,21 @@ extern void manage_space(struct Space *space) {
 			continue;
 		if (window->fullscreen && window->space->focused != window)
 			unfullscreen_window(window);
-		river_window_v1_use_ssd(window->obj);
-		river_window_v1_set_tiled(window->obj, 15);
-		river_window_v1_propose_dimensions(window->obj,
-				window->layout.width,
-				window->layout.height);
+		if (window->floating) {
+			river_window_v1_use_csd(window->obj);
+			river_node_v1_set_position(window->node,
+					window->float_layout.x, window->float_layout.y);
+			river_window_v1_propose_dimensions(window->obj,
+					window->float_layout.width,
+					window->float_layout.height);
+		}
+		else {
+			river_window_v1_use_ssd(window->obj);
+			river_window_v1_set_tiled(window->obj, 15);
+			river_window_v1_propose_dimensions(window->obj,
+					window->layout.width,
+					window->layout.height);
+		}
 	}
 }
 
@@ -333,12 +377,42 @@ extern void render_space(struct Space *space) {
 		if (window->space != space || !valid_rect(window->layout))
 			continue;
 		river_window_v1_show(window->obj);
-		river_node_v1_set_position(window->node,
-				window->layout.x, window->layout.y);
+		if (!window->floating)
+			river_node_v1_set_position(window->node,
+					window->layout.x, window->layout.y);
 		if (space->layout == monocle_layout)
 			render_border(window, monocle_borderpx, border_color);
 		else
 			render_border(window, tiled_borderpx, border_color);
+	}
+}
+
+extern void render_pointer_op(struct Seat *seat) {
+	int32_t x;
+	int32_t y;
+	switch (seat->op) {
+	case SEAT_OP_NONE:
+		break;
+	case SEAT_OP_MOVE:
+		x = seat->op_start_x + seat->op_dx;
+		y = seat->op_start_y + seat->op_dy;
+		river_node_v1_set_position(seat->op_window->node, x, y);
+		seat->op_window->float_layout.x = x;
+		seat->op_window->float_layout.y = y;
+		break;
+	case SEAT_OP_RESIZE:
+		x = seat->op_start_x;
+		y = seat->op_start_y;
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_LEFT) != 0) {
+			x += seat->op_start_width - seat->op_window->float_layout.width;
+		}
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_TOP) != 0) {
+			y += seat->op_start_height - seat->op_window->float_layout.height;
+		}
+		river_node_v1_set_position(seat->op_window->node, x, y);
+		seat->op_window->float_layout.x = x;
+		seat->op_window->float_layout.y = y;
+		break;
 	}
 }
 

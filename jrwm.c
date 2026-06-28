@@ -202,6 +202,16 @@ static void window_handle_unmaximize_requested(void *data, struct river_window_v
 		window->space->layout = tiled_layout;
 }
 
+static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {
+	struct Window *window = data;
+	window->pointer_move_requested = river_seat_v1_get_user_data(river_seat);
+}
+static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {
+	struct Window *window = data;
+	window->pointer_resize_requested = river_seat_v1_get_user_data(river_seat);
+	window->pointer_resize_requested_edges = edges;
+}
+
 // Ignored events
 static void window_handle_app_id(void *data, struct river_window_v1 *obj, const char *app_id) {}
 static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
@@ -209,8 +219,6 @@ static void window_handle_dimensions_hint(void *data, struct river_window_v1 *ob
 static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
 static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {}
-static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
-static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {}
 static void window_handle_presentation_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
 static void window_handle_show_window_menu_requested(void *data, struct river_window_v1 *obj, int32_t x, int32_t y) {}
 static void window_handle_title(void *data, struct river_window_v1 *obj, const char *title) {}
@@ -278,8 +286,17 @@ static void seat_handle_pointer_position(void *data, struct river_seat_v1 *obj, 
 		seat->focused = output->active;
 }
 
-static void seat_handle_op_delta(void *data, struct river_seat_v1 *obj, int32_t dx, int32_t dy) {}
-static void seat_handle_op_release(void *data, struct river_seat_v1 *obj) {}
+static void seat_handle_op_delta(void *data, struct river_seat_v1 *obj, int32_t dx, int32_t dy) {
+	struct Seat *seat = data;
+	seat->op_dx = dx;
+	seat->op_dy = dy;
+
+}
+static void seat_handle_op_release(void *data, struct river_seat_v1 *obj) {
+	struct Seat *seat = data;
+	seat->op_release = true;
+}
+
 static void seat_handle_pointer_leave(void *data, struct river_seat_v1 *obj) {}
 static void seat_handle_shell_surface_interaction(void *data, struct river_seat_v1 *obj, struct river_shell_surface_v1 *river_shell_surface) {}
 static void seat_handle_wl_seat(void *data, struct river_seat_v1 *obj, uint32_t id) {}
@@ -342,12 +359,62 @@ static void wm_handle_seat(void *data, struct river_window_manager_v1 *obj, stru
 	river_layer_shell_seat_v1_add_listener(seat->ls, &ls_seat_listener, seat);
 	wl_list_insert(&wm.seats, &seat->link);
 }
+static void manage_seat_op(struct Seat *seat) {
+	switch (seat->op) {
+	case SEAT_OP_NONE:
+		break;
+	case SEAT_OP_MOVE:
+		if (seat->op_release) {
+			river_seat_v1_op_end(seat->obj);
+			seat->op = SEAT_OP_NONE;
+			seat->op_window = NULL;
+			break;
+		}
+		break;
+	case SEAT_OP_RESIZE:
+		if (seat->op_release) {
+			river_window_v1_inform_resize_end(seat->op_window->obj);
+			river_seat_v1_op_end(seat->obj);
+			seat->op = SEAT_OP_NONE;
+			seat->op_window = NULL;
+			break;
+		}
+		int32_t width = seat->op_start_width;
+		int32_t height = seat->op_start_height;
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_LEFT) != 0) {
+			width -= seat->op_dx;
+		}
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_RIGHT) != 0) {
+			width += seat->op_dx;
+		}
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_TOP) != 0) {
+			height -= seat->op_dy;
+		}
+		if ((seat->op_edges & RIVER_WINDOW_V1_EDGES_BOTTOM) != 0) {
+			height += seat->op_dy;
+		}
+		if (width < 1)
+			width = 1;
+		if (height < 1)
+			height = 1;
+		river_window_v1_propose_dimensions(
+				seat->op_window->obj, width, height);
+		seat->op_window->float_layout.width = width;
+		seat->op_window->float_layout.height = height;
+		break;
+	}
+	seat->op_release = false;
+}
 
 static void wm_handle_window(void *data, struct river_window_manager_v1 *obj, struct river_window_v1 *river_window) {
 	struct Window *window = calloc(1, sizeof(struct Window));
 	window->obj = river_window;
 	window->node = river_window_v1_get_node(window->obj);
 	window->set_capabilities = true;
+	window->float_layout.x = 100;
+	window->float_layout.y = 100;
+	window->float_layout.width = 800;
+	window->float_layout.height = 600;
 
 	place_window(window);
 	river_window_v1_add_listener(window->obj, &river_window_listener, window);
@@ -367,7 +434,9 @@ static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *o
 	wl_list_for_each(seat, &wm.seats, link) {
 		manage_xkb_bindings(seat);
 		manage_seat_focus(seat);
+		manage_seat_op(seat);
 	}
+
 	river_window_manager_v1_manage_finish(window_manager_v1);
 }
 
@@ -381,8 +450,10 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 		render_space(space);
 
 	struct Seat *seat;
-	wl_list_for_each(seat, &wm.seats, link)
+	wl_list_for_each(seat, &wm.seats, link) {
+		render_pointer_op(seat);
 		render_seat_focus(seat);
+	}
 
 	river_window_manager_v1_render_finish(window_manager_v1);
 }
