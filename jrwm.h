@@ -72,6 +72,7 @@ struct Window {
 	bool maximized;  // The window has been inform_maximized
 	bool fullscreen; // The window is fullscreen
 	bool fake_fullscreen; // The window acts as if fullscreen
+	bool floating; // The window is floating
 
 	// Deferred tasks for the manage sequence
 	bool set_capabilities;  // window_v1.set_capabilities

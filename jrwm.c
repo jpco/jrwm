@@ -179,6 +179,34 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 	window->exit_fullscreen = true;
 }
 
+static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {
+	// From river-window-management-v1:
+	//
+	// > A surface with a parent set might be a dialog, file picker, or similar for the parent window.
+	//
+	// Therefore, we treat such windows as floating.
+	struct Window *window = data;
+	if (parent != NULL)
+		window->floating = true;
+}
+
+static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {
+	// Treat windows with a fixed size or windows with a very small dimension
+	// as dialog/popup windows. This is necessary because not all dialogs have
+	// a parent window set (see window_handle_parent).
+	//
+	// This logic was originally taken from the river-based kwm window manager.
+	// See <https://github.com/kewuaa/kwm/blob/v0.3.0/src/kwm/window.zig#L1087-L1095>.
+	struct Window *window = data;
+	bool is_fixed = max_width > 0 && max_height > 0 &&
+		max_width == min_width &&
+		max_height == min_height;
+	bool is_small = max_width > 0 && max_height > 0 &&
+		max_width < 600 && max_height < 400;
+	if (is_fixed || is_small)
+		window->floating = true;
+}
+
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
 	struct Window *window = data;
 	if (width < window->layout.width)
@@ -205,10 +233,8 @@ static void window_handle_unmaximize_requested(void *data, struct river_window_v
 // Ignored events
 static void window_handle_app_id(void *data, struct river_window_v1 *obj, const char *app_id) {}
 static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
-static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {}
 static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
-static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {}
 static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
 static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {}
 static void window_handle_presentation_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
