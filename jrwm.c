@@ -180,14 +180,11 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 }
 
 static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {
-	// From river-window-management-v1:
-	//
-	// > A surface with a parent set might be a dialog, file picker, or similar for the parent window.
-	//
-	// Therefore, we treat such windows as floating.
+	// From river-window-management-v1: “A surface with a parent set
+	// might be a dialog, file picker, or similar for the parent
+	// window.” Therefore, we treat such windows as floating.
 	struct Window *window = data;
-	if (parent != NULL)
-		window->floating = true;
+	window->floating = parent != NULL;
 }
 
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {
