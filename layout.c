@@ -17,6 +17,8 @@
 //
 // Copyright 2026 Isaac Freund, 2026 Jack Conger.  All rights reserved.
 
+#include <stdio.h>
+
 #include "jrwm.h"
 
 // Private functions for window management and rendering
@@ -34,8 +36,12 @@ static void subtract_border(struct Rect *rect, int32_t border) {
 }
 
 static void render_border(struct Window *window, int thickness, uint32_t *color) {
-	river_window_v1_set_borders(window->obj, 15, thickness,
-			color[0], color[1], color[2], color[3]);
+	if (thickness == 0)
+		river_window_v1_set_borders(window->obj, 15, thickness,
+				0, 0, 0, 0);
+	else
+		river_window_v1_set_borders(window->obj, 15, thickness,
+				color[0], color[1], color[2], color[3]);
 }
 
 static void unfullscreen_window(struct Window *window) {
@@ -114,13 +120,13 @@ extern void place_window(struct Window *window) {
 	if (!wl_list_empty(&wm.seats)) {
 		struct Seat *seat = wl_container_of(wm.seats.next, seat, link);
 		window->space = seat->focused;
-		seat->focused->focused = window;
+		// seat->focused->focused = window;
 	}
 
 	// Fallback: just pick the first Space
 	if (window->space == NULL) {
 		window->space = wl_container_of(wm.spaces.next, window->space, link);
-		window->space->focused = window;
+		// window->space->focused = window;
 	}
 }
 
@@ -191,19 +197,19 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 	int count = 0, w = 0, rightwidth = bounds.width, stackheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space && !window->floating)
+		if (window->space == space && !window->floating && window->born)
 			count++;
 	}
 	int max_main_depth = space->tiled_max_depth;
 	int cur_main_depth = MIN(count, max_main_depth);
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space || window->floating)
+		if (window->space != space || window->floating || !window->born)
 			continue;
 		if (window->maximized) {
 			river_window_v1_inform_unmaximized(window->obj);
 			window->maximized = false;
 		}
-		if (count == 1 || w < max_main_depth) {
+		if (count == 1 || w < cur_main_depth) {
 			// Left side "main" windows
 			window->layout = bounds;
 			window->layout.height = stackheight / (cur_main_depth - w);
@@ -322,7 +328,10 @@ extern void manage_space(struct Space *space) {
 			continue;
 		if (window->fullscreen && window->space->focused != window)
 			unfullscreen_window(window);
-		river_window_v1_use_ssd(window->obj);
+		if (window->floating)
+			river_window_v1_use_csd(window->obj);
+		else
+			river_window_v1_use_ssd(window->obj);
 		river_window_v1_set_tiled(window->obj,
 				(window->floating) ? 0 : 15);
 		river_window_v1_propose_dimensions(window->obj,
@@ -339,12 +348,20 @@ extern void render_space(struct Space *space) {
 
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
+		if (!window->born) {
+			fprintf(stderr, "BE BORN\n");
+			window->born = true;
+			place_window(window);
+			continue;
+		}
 		if (window->space != space || !valid_rect(window->layout))
 			continue;
 		river_window_v1_show(window->obj);
 		river_node_v1_set_position(window->node,
 				window->layout.x, window->layout.y);
-		if (space->layout == monocle_layout)
+		if (window->floating)
+			render_border(window, 0, 0);
+		else if (space->layout == monocle_layout)
 			render_border(window, monocle_borderpx, border_color);
 		else
 			render_border(window, tiled_borderpx, border_color);
@@ -356,8 +373,8 @@ extern void render_seat_focus(struct Seat *seat) {
 	if (window == NULL || seat->ls_focused)
 		return;
 	if (window->floating)
-		river_node_v1_place_top(window->node);
-	if (seat->focused->layout == monocle_layout)
+		render_border(window, 0, 0);
+	else if (seat->focused->layout == monocle_layout)
 		render_border(window, monocle_borderpx, focused_color);
 	else
 		render_border(window, tiled_borderpx, focused_color);

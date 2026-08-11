@@ -8,7 +8,7 @@ PREFIX	= /usr/local
 BINDIR	= $(PREFIX)/bin
 MANDIR	= $(PREFIX)/man
 
-CFLAGS	?= -g -O2 -Wall
+CFLAGS	?= -ggdb -O0 -Wall
 CFLAGS	+= -I. -I$(PROTODIR)
 #CFLAGS	+= -std=c99 -pedantic -D_POSIX_C_SOURCE=200112L
 LDFLAGS	?= -flto

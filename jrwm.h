@@ -69,6 +69,8 @@ struct Window {
 	struct river_window_v1 *obj;
 	struct river_node_v1 *node;
 
+	bool born;
+
 	bool maximized;  // The window has been inform_maximized
 	bool fullscreen; // The window is fullscreen
 	bool fake_fullscreen; // The window acts as if fullscreen

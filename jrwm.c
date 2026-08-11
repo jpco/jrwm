@@ -161,6 +161,7 @@ const struct river_layer_shell_output_v1_listener ls_output_listener = {
 };
 
 static void window_handle_closed(void *data, struct river_window_v1 *obj) {
+	fprintf(stderr, "closed - ");
 	struct Window *window = data;
 
 	replace_window(window);
@@ -180,14 +181,22 @@ static void window_handle_exit_fullscreen_requested(void *data, struct river_win
 }
 
 static void window_handle_parent(void *data, struct river_window_v1 *obj, struct river_window_v1 *parent) {
+	fprintf(stderr, "parent - ");
+
 	// From river-window-management-v1: “A surface with a parent set
 	// might be a dialog, file picker, or similar for the parent
 	// window.” Therefore, we treat such windows as floating.
 	struct Window *window = data;
-	window->floating = parent != NULL;
+	if (parent != NULL) {
+		window->floating = true;
+		window->layout.x = 100;
+		window->layout.y = 100;
+	}
 }
 
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {
+	fprintf(stderr, "dims hint (%d,%d)-(%d,%d) - ", min_width, min_height, max_width, max_height);
+
 	// Treat windows with a fixed size or windows with a very small dimension
 	// as dialog/popup windows. This is necessary because not all dialogs have
 	// a parent window set (see window_handle_parent).
@@ -200,11 +209,19 @@ static void window_handle_dimensions_hint(void *data, struct river_window_v1 *ob
 		max_height == min_height;
 	bool is_small = max_width > 0 && max_height > 0 &&
 		max_width < 600 && max_height < 400;
-	if (is_fixed || is_small)
+
+	window->layout.width = min_width;
+	window->layout.height = min_height;
+
+	if (is_fixed || is_small) {
 		window->floating = true;
+		window->layout.x = 100;
+		window->layout.y = 100;
+	}
 }
 
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {
+	fprintf(stderr, "dims - ");
 	struct Window *window = data;
 	if (width < window->layout.width)
 		window->layout.x += (window->layout.width - width)/2;
@@ -228,9 +245,15 @@ static void window_handle_unmaximize_requested(void *data, struct river_window_v
 }
 
 // Ignored events
-static void window_handle_app_id(void *data, struct river_window_v1 *obj, const char *app_id) {}
-static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {}
-static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {}
+static void window_handle_app_id(void *data, struct river_window_v1 *obj, const char *app_id) {
+	fprintf(stderr, "app id - ");
+}
+static void window_handle_decoration_hint(void *data, struct river_window_v1 *obj, uint32_t hint) {
+	fprintf(stderr, "decoration hint - ");
+}
+static void window_handle_identifier(void *data, struct river_window_v1 *obj, const char *indentifier) {
+	fprintf(stderr, "identifier - ");
+}
 static void window_handle_minimize_requested(void *data, struct river_window_v1 *obj) {}
 static void window_handle_pointer_move_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat) {}
 static void window_handle_pointer_resize_requested(void *data, struct river_window_v1 *obj, struct river_seat_v1 *river_seat, uint32_t edges) {}
@@ -367,6 +390,7 @@ static void wm_handle_seat(void *data, struct river_window_manager_v1 *obj, stru
 }
 
 static void wm_handle_window(void *data, struct river_window_manager_v1 *obj, struct river_window_v1 *river_window) {
+	fprintf(stderr, "window - ");
 	struct Window *window = calloc(1, sizeof(struct Window));
 	window->obj = river_window;
 	window->node = river_window_v1_get_node(window->obj);
@@ -379,6 +403,7 @@ static void wm_handle_window(void *data, struct river_window_manager_v1 *obj, st
 
 static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *obj) {
 	struct Window *window;
+	fprintf(stderr, "manage - ");
 	wl_list_for_each(window, &wm.windows, link)
 		manage_window_deferred(window);
 
@@ -395,6 +420,7 @@ static void wm_handle_manage_start(void *data, struct river_window_manager_v1 *o
 }
 
 static void wm_handle_render_start(void *data, struct river_window_manager_v1 *window_manager_v1) {
+	fprintf(stderr, "render\n");
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link)
 		river_window_v1_hide(window->obj);
