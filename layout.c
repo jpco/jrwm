@@ -124,6 +124,17 @@ extern void place_window(struct Window *window) {
 	}
 }
 
+// Center window on its output, no-op if it doesn't have an active output
+extern void center_window(struct Window *window) {
+	struct Output *output = active_on_output(window->space);
+	if (output == NULL)
+		return;
+
+	struct Rect bounds = output->windowed;
+	window->layout.x = (bounds.width - window->layout.width)/2;
+	window->layout.y = (bounds.height - window->layout.height)/2;
+}
+
 // Replace this Window with any other where necessary
 extern void replace_window(struct Window *window) {
 	struct Seat *seat;
@@ -191,13 +202,13 @@ extern void tiled_layout(struct Space *space, struct Rect bounds) {
 	int count = 0, w = 0, rightwidth = bounds.width, stackheight = bounds.height;
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space == space)
+		if (window->space == space && !window->floating && window->born)
 			count++;
 	}
 	int max_main_depth = space->tiled_max_depth;
 	int cur_main_depth = MIN(count, max_main_depth);
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space)
+		if (window->space != space || window->floating || !window->born)
 			continue;
 		if (window->maximized) {
 			river_window_v1_inform_unmaximized(window->obj);
@@ -323,7 +334,8 @@ extern void manage_space(struct Space *space) {
 		if (window->fullscreen && window->space->focused != window)
 			unfullscreen_window(window);
 		river_window_v1_use_ssd(window->obj);
-		river_window_v1_set_tiled(window->obj, 15);
+		river_window_v1_set_tiled(window->obj,
+				(window->floating) ? 0 : 15);
 		river_window_v1_propose_dimensions(window->obj,
 				window->layout.width,
 				window->layout.height);
@@ -338,8 +350,19 @@ extern void render_space(struct Space *space) {
 
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
+		// Hide window on the first frame, see the `born` member comment.
+		if (!window->born) {
+			window->born = true;
+			place_window(window);
+			continue;
+		}
+
 		if (window->space != space || !valid_rect(window->layout))
 			continue;
+		if (window->floating)
+			river_node_v1_place_top(window->node);
+		else if (space->focused && window != space->focused)
+			river_node_v1_place_bottom(window->node);
 		river_window_v1_show(window->obj);
 		river_node_v1_set_position(window->node,
 				window->layout.x, window->layout.y);
@@ -354,7 +377,6 @@ extern void render_seat_focus(struct Seat *seat) {
 	struct Window *window = seat->focused->focused;
 	if (window == NULL || seat->ls_focused)
 		return;
-	river_node_v1_place_top(window->node);
 	if (seat->focused->layout == monocle_layout)
 		render_border(window, monocle_borderpx, focused_color);
 	else
