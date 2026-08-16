@@ -114,13 +114,11 @@ extern void place_window(struct Window *window) {
 	if (!wl_list_empty(&wm.seats)) {
 		struct Seat *seat = wl_container_of(wm.seats.next, seat, link);
 		window->space = seat->focused;
-		seat->focused->focused = window;
 	}
 
 	// Fallback: just pick the first Space
 	if (window->space == NULL) {
 		window->space = wl_container_of(wm.spaces.next, window->space, link);
-		window->space->focused = window;
 	}
 }
 
@@ -180,7 +178,7 @@ extern void place_seat(struct Seat *seat) {
 extern void monocle_layout(struct Space *space, struct Rect bounds) {
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
-		if (window->space != space)
+		if (window->space != space || window->floating || !window->born)
 			continue;
 		if (window->space->focused != NULL &&
 				window->space->focused != window) {
@@ -351,11 +349,8 @@ extern void render_space(struct Space *space) {
 	struct Window *window;
 	wl_list_for_each(window, &wm.windows, link) {
 		// Hide window on the first frame, see the `born` member comment.
-		if (!window->born) {
-			window->born = true;
-			place_window(window);
+		if (!window->born)
 			continue;
-		}
 
 		if (window->space != space || !valid_rect(window->layout))
 			continue;

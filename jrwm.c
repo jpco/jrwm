@@ -412,6 +412,15 @@ static void wm_handle_render_start(void *data, struct river_window_manager_v1 *w
 	wl_list_for_each(seat, &wm.seats, link)
 		render_seat_focus(seat);
 
+	// Set new window as focused, and born, only after all manage+render
+	// logic is complete.
+	wl_list_for_each(window, &wm.windows, link) {
+		if (!window->born) {
+			window->space->focused = window;
+			window->born = true;
+		}
+	}
+
 	river_window_manager_v1_render_finish(window_manager_v1);
 }
 
