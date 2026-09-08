@@ -50,6 +50,7 @@ struct Space {
 	int tiled_max_depth;
 
 	void (*layout)(struct Space *space, struct Rect bounds);
+	void *layout_state;     // May be null, even if layout is not
 };
 
 // An Output is like an actual physical display.

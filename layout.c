@@ -177,13 +177,17 @@ extern void place_seat(struct Seat *seat) {
 
 // Space layout functions
 
+// Monocle layout gives a single tiled window the whole bounds
 extern void monocle_layout(struct Space *space, struct Rect bounds) {
-	struct Window *window;
+	struct Window *window, *top = space->layout_state;
+	if (space->focused != NULL && space->focused != top && !space->focused->floating) {
+		top = space->focused;
+		space->layout_state = space->focused;
+	}
 	wl_list_for_each(window, &wm.windows, link) {
 		if (window->space != space || window->floating || !window->born)
 			continue;
-		if (window->space->focused != NULL &&
-				window->space->focused != window) {
+		if (window != top) {
 			// HACK: Intentionally invalidate Rect to prevent rendering
 			window->layout.width = window->layout.height = -1;
 			continue;
@@ -197,6 +201,7 @@ extern void monocle_layout(struct Space *space, struct Rect bounds) {
 	}
 }
 
+// Tiled layout performs tiling somewhat similar to that of dwm
 extern void tiled_layout(struct Space *space, struct Rect bounds) {
 	subtract_border(&bounds, tiled_output_padding);
 	int count = 0, w = 0, rightwidth = bounds.width, stackheight = bounds.height;
