@@ -157,7 +157,7 @@ extern void monocle_layout(struct Space *, struct Rect);
 // Called on creation of objects to manage internal pointers
 extern void place_output(struct Output *);
 extern void place_window(struct Window *);
-extern void center_window(struct Window *);
+extern void float_window(struct Window *);
 extern void place_seat(struct Seat *);
 
 // Called on deletion of objects

@@ -184,10 +184,10 @@ static void window_handle_parent(void *data, struct river_window_v1 *obj, struct
 	// might be a dialog, file picker, or similar for the parent
 	// window.” Therefore, we treat such windows as floating.
 	struct Window *window = data;
-	if (parent != NULL) {
+	if (parent != NULL)
 		window->floating = true;
-		center_window(window);
-	}
+	if (window->floating)
+		float_window(window);
 }
 
 static void window_handle_dimensions_hint(void *data, struct river_window_v1 *obj, int32_t min_width, int32_t min_height, int32_t max_width, int32_t max_height) {
@@ -203,10 +203,10 @@ static void window_handle_dimensions_hint(void *data, struct river_window_v1 *ob
 		max_height == min_height;
 	bool is_small = max_width > 0 && max_height > 0 &&
 		max_width < 600 && max_height < 400;
-	if (is_fixed || is_small) {
+	if (is_fixed || is_small)
 		window->floating = true;
-		center_window(window);
-	}
+	if (window->floating)
+		float_window(window);
 }
 
 static void window_handle_dimensions(void *data, struct river_window_v1 *obj, int32_t width, int32_t height) {

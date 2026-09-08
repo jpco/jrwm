@@ -122,15 +122,17 @@ extern void place_window(struct Window *window) {
 	}
 }
 
-// Center window on its output, no-op if it doesn't have an active output
-extern void center_window(struct Window *window) {
+// Place this floating Window on its Output
+extern void float_window(struct Window *window) {
 	struct Output *output = active_on_output(window->space);
 	if (output == NULL)
 		return;
 
 	struct Rect bounds = output->windowed;
-	window->layout.x = (bounds.width - window->layout.width)/2;
-	window->layout.y = (bounds.height - window->layout.height)/2;
+	window->layout.width = MIN(window->layout.width, bounds.width);
+	window->layout.height = MIN(window->layout.height, bounds.height);
+	window->layout.x = MAX(bounds.x, (bounds.width - window->layout.width)/2);
+	window->layout.y = MAX(bounds.y, (bounds.height - window->layout.height)/2);
 }
 
 // Replace this Window with any other where necessary
@@ -331,7 +333,10 @@ extern void manage_space(struct Space *space) {
 			continue;
 		if (window->fullscreen && window->space->focused != window)
 			unfullscreen_window(window);
-		river_window_v1_use_ssd(window->obj);
+		if (window->floating)
+			river_window_v1_use_csd(window->obj);
+		else
+			river_window_v1_use_ssd(window->obj);
 		river_window_v1_set_tiled(window->obj,
 				(window->floating) ? 0 : 15);
 		river_window_v1_propose_dimensions(window->obj,
@@ -361,7 +366,9 @@ extern void render_space(struct Space *space) {
 		river_window_v1_show(window->obj);
 		river_node_v1_set_position(window->node,
 				window->layout.x, window->layout.y);
-		if (space->layout == monocle_layout)
+		if (window->floating)
+			render_border(window, 0, border_color);
+		else if (space->layout == monocle_layout)
 			render_border(window, monocle_borderpx, border_color);
 		else
 			render_border(window, tiled_borderpx, border_color);
@@ -372,7 +379,9 @@ extern void render_seat_focus(struct Seat *seat) {
 	struct Window *window = seat->focused->focused;
 	if (window == NULL || seat->ls_focused)
 		return;
-	if (seat->focused->layout == monocle_layout)
+	if (window->floating)
+		render_border(window, 0, focused_color);
+	else if (seat->focused->layout == monocle_layout)
 		render_border(window, monocle_borderpx, focused_color);
 	else
 		render_border(window, tiled_borderpx, focused_color);
