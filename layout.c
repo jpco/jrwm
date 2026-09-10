@@ -384,8 +384,10 @@ extern void render_seat_focus(struct Seat *seat) {
 	struct Window *window = seat->focused->focused;
 	if (window == NULL || seat->ls_focused)
 		return;
-	if (window->floating)
+	if (window->floating) {
 		render_border(window, 0, focused_color);
+		river_node_v1_place_top(window->node);
+	}
 	else if (seat->focused->layout == monocle_layout)
 		render_border(window, monocle_borderpx, focused_color);
 	else
